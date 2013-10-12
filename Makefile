@@ -1,3 +1,4 @@
+#this is a comment
 OBJS = ast.cmo parser.cmo scanner.cmo interpret.cmo bytecode.cmo compile.cmo execute.cmo microc.cmo
 
 TESTS = \
