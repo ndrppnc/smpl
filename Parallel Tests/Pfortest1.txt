@@ -1,0 +1,17 @@
+main()
+
+{
+  
+       int i;
+  
+       pfor (2,i = 0 ; i < 50 ; i = i + 1) 
+       {
+    
+       		print(i);
+ 
+		
+       }
+  
+       print(42);
+
+}

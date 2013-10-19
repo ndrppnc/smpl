@@ -1,0 +1,17 @@
+void main(){
+int i=0;
+int sum=0;
+int n;
+int t;
+printf(“Enter the number of threads t: ”);
+scanf(“%d”, &t);
+printf(“Enter the upper bound n: ”);
+scanf(“%d”, &n);
+pfor(t; i=0; i<n; i++)
+       lock {
+         sum += i;
+       }
+}
+printf(“The sum of the first %d numbers is %d.\n”,
+        limit,sum);
+}
