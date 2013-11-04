@@ -15,7 +15,7 @@ rule token = parse
 | '/'       { DIVIDE }
 | '%'       { MODULUS }
 | '='       { ASSIGN }
-| "!"		{ NOT }
+| "!"		{ NOT } (* how to do this in the AST *)
 | "&&"		{ AND }
 | "||"		{ OR }
 | "=="      { EQ }
@@ -24,9 +24,9 @@ rule token = parse
 | "<="      { LEQ }
 | ">"       { GT }
 | ">="      { GEQ }
-| "while"   { WHILE }
+| "while"   { WHILE } 
 | "return"  { RETURN }
-| "break"	{ BREAK }
+| "break"	{ BREAK } (* how to do this in the AST *)
 | "spawn"   { SPAWN }
 | "lock"    { LOCK }
 | "barrier" { BARRIER }
