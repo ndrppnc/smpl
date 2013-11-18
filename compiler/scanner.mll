@@ -2,10 +2,6 @@
   open Str
 }
 
-(*let any_char = ISet.add_range 0 255 ISet.empty*)
-(* let string_validation = Str.regexp('"'([^'"''\\']*('\\'.[^'"''\\']*)
-(*================*)(*  *)(*'"')  *)
-
 rule token = parse
   [' ' '\t' '\r' '\n'] { token lexbuf }
 | "/*"      { comment lexbuf }           (* Comments *)
@@ -54,7 +50,7 @@ rule token = parse
 | '.'['0'-'9']+('e'['-''+']?['0'-'9']+)? as lit { FLOAT_LIT(float_of_string lit) }
 | ['0'-'9']+'e'['-''+']?['0'-'9']+ as lit { FLOAT_LIT(float_of_string lit) }
 | '''['a'-'z']''' as lxm { CHAR_LIT(lxm.[1]) }
-(*| string_validation as lxm { STRING_LIT(lxm) } *)
+| '"'([^'"''\\']*('\\'_[^'"''\\']*)* as lxm)'"' { STRING_LIT(lxm) } 
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
