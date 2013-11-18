@@ -11,7 +11,8 @@ funca(int a1, int a2)
 int main(int a, float b)
 {
     /* test program */
-    int i;
+    int i = 0;
+    string stest = "I am working fine now\n";
     for(i=10;i<20;i=i+1)
     {
         print(itest, ftest, ctest, btest, a, b);
@@ -22,5 +23,6 @@ int main(int a, float b)
         print(itest, ftest, ctest, btest, a, b);
     }
     spawn(funca(5,3));
+    print("This is a string\" \t\n");
     barrier;
 }
