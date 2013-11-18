@@ -1,7 +1,7 @@
 { open Parser }
 
 rule token = parse
-  [' ' '\t' '\r' '\n'] { token lexbuf } (* Whitespace *)
+  [' ' '\t' '\r' '\n'] { token lexbuf }  (* Whitespace *)
 | "/*"      { comment lexbuf }           (* Comments *)
 | '('       { LPAREN }
 | ')'       { RPAREN }
@@ -15,35 +15,40 @@ rule token = parse
 | '/'       { DIVIDE }
 | '%'       { MODULUS }
 | '='       { ASSIGN }
-| "!"		{ NOT } (* how to do this in the AST *)
-| "&&"		{ AND }
-| "||"		{ OR }
+| "!"	    { NOT }
+| "&&"	    { AND }
+| "||"	    { OR }
 | "=="      { EQ }
 | "!="      { NEQ }
 | '<'       { LT }
 | "<="      { LEQ }
 | ">"       { GT }
 | ">="      { GEQ }
-| "while"   { WHILE } 
+| "if"      { IF }
+| "else"    { ELSE }
+| "for"     { FOR }
+| "while"   { WHILE }
 | "return"  { RETURN }
-| "break"	{ BREAK } (* how to do this in the AST *)
+| "break"   { BREAK }
 | "spawn"   { SPAWN }
 | "lock"    { LOCK }
 | "barrier" { BARRIER }
+| "pfor"    { PFOR }
 | "int"     { INT }
 | "float"   { FLOAT }
 | "boolean" { BOOLEAN }
 | "char"    { CHAR }
 | "string"  { STRING }
 | "void"    { VOID }
-| "null"	{ NULL }
-| "true"	{ bool $1 }
-| "false"	{ bool $1 }
-| ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
-| [float regex] as lxm { FLOATING(float_of_string lxm) }
-| '''['a'-'z']''' as lxm { CHAR(lxm) }
-| '"'([^'"''\']*(?:'\'.[^'"''\']*)*)'"' as lxm { STRING(lxm) } (* "([^"\\]*(?:\\.[^"\\]*)*)" *)
-| ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*('['['0'-'9']+']')+ as lxm { ARRAY(lxm) }
+| "null"    { NULL }
+| "true"  as lxm { BOOL(bool_of_string lxm) }
+| "false" as lxm { BOOL(bool_of_string lxm) }
+| ['0'-'9']+ as lit { LITERAL(int_of_string lit) }
+| ['0'-'9']+'.'['0'-'9']*('e'['-''+']?['0'-'9']+)? as lit { FLOATING(float_of_string lit) }
+| '.'['0'-'9']+('e'['-''+']?['0'-'9']+)? as lit { FLOATING(float_of_string lit) }
+| ['0'-'9']+'e'['-''+']?['0'-'9']+ as lit { FLOATING(float_of_string lit) }
+| '''['a'-'z']''' as lxm { CHARACTER(lxm.[1]) }
+| '"'([^'"''\\']*('\\'.[^'"''\\']*)*)'"' as lxm { STRING(lxm) } 
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
