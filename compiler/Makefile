@@ -1,6 +1,6 @@
-TARFILES = Makefile scanner.mll parser.mly ast.mli smpl.ml
+TARFILES = Makefile scanner.mll parser.mly ast.mli printast.ml semantic_checker.ml compile.ml smpl.ml
 
-OBJS = ast.cmo parser.cmo scanner.cmo smplc.cmo
+OBJS = ast.cmo parser.cmo scanner.cmo printast.cmo semantic_checker.cmo compile.cmo smplc.cmo
 
 smplc : $(OBJS)
 	ocamlc -o smplc $(OBJS)

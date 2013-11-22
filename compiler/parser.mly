@@ -14,7 +14,6 @@
 %token <bool> BOOL_LIT
 %token <char> CHAR_LIT
 %token <string> STRING_LIT
-%token <unit> VOID_LIT /* devashi: Do we need to take this ?*/
 %token <string> ID
 %token GLOBAL
 %token EOF
