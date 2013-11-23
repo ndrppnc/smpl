@@ -1,0 +1,50 @@
+type op = Add | Sub | Mult | Div | Mod | Equal | Neq | Less | Leq | Greater | Geq | And | Or
+
+type data_type =
+    IntType of string
+  | FloatType of string
+  | BoolType of string
+  | CharType of string
+  | StrType of string
+  | VoidType of string
+
+
+type literal =
+    Integer of int
+  | Float of float
+  | Boolean of bool
+  | Char of char
+  | String of string
+
+type expr =
+  Id of string
+  | Literal of literal
+  | Binop of expr * op * expr
+  | Assign of string * expr
+  | Call of string * expr list
+  | Noexpr
+(* Add Array *)
+
+type stmt =
+    Block of stmt list
+  | Expr of expr
+  | Return of expr
+  | Break of expr
+  | Declare of data_type
+  | DeclareAssign of data_type * expr
+  | If of expr * stmt * stmt
+  | For of expr * expr * expr * stmt
+  | While of expr * stmt
+  | Pfor of expr * expr * expr * expr * stmt
+  | Spawn of stmt (* Not Sure whether stmt or expr *)
+  | Lock of stmt (* Not sure whether stmt or expr *)
+  | Barrier of expr	
+
+type func_decl = {
+    fname : data_type;
+    formals : data_type list;
+    locals : data_type list;
+    body : stmt list;
+  }
+
+type program = (data_type * literal) list * func_decl list
