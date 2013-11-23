@@ -1,6 +1,11 @@
 open Ast
 open String
 
+type env = {
+    locks : int;
+    threads : int;
+}
+
 let includes = 
     "#include <stdio.h>\n" ^
     "#include <stdbool.h>\n" ^
@@ -50,10 +55,11 @@ let rec convert_expr = function
         (List.map (fun e -> convert_expr e ) al) ^ ")")
   | _ -> ""
 
-(*
-let rec print_tabs n = function
-   _ -> if(n != 0) then "\t" ^ print_tabs n-1 
-*)
+let rec tabs (n,s) =
+	if n = 1 then
+	  (1,s^"\t")
+	else
+	  tabs (n-1,s^"\t")
 
 let rec convert_stmt = function
     Expr(e) -> convert_expr e ^ ";\n"
@@ -76,9 +82,17 @@ let rec convert_stmt = function
 			"\n\n" ^ convert_stmt Barrier() *)
   | _ -> ""
 
-let locks = ""
+let rec locks (n,l) =
+	if n = 0 then
+	  (0, l)
+	else
+	  locks (n-1, ("pthread_mutex_t m" ^ string_of_int (n-1) ^ "=PTHREAD_MUTEX_INITIALIZER;\n") :: l)
 
-let threads = ""
+let rec threads (n,l) =
+        if n = 0 then
+          (0, l)
+        else
+          threads (n-1, ("thread_func" ^ string_of_int (n-1) ^ "();\n") :: l)
 
 let string_of_fdecl fdecl =
   string_of_data_type fdecl.fname ^ "(" ^ 
@@ -90,17 +104,18 @@ let string_of_fdecl fdecl =
 let convert_globals globals = 
     let data_type = fst globals in
     match data_type with
-          IntType(s) -> "int " ^ s ^ " = " ^ string_of_literal (snd globals)
-        | FloatType(s) -> "float " ^ s ^ " = " ^ string_of_literal (snd globals)
-        | BoolType(s) -> "bool " ^ s ^ " = " ^ string_of_literal (snd globals)
-        | CharType(s) -> "char " ^ s ^ " = " ^ "'" ^ string_of_literal (snd globals) ^ "'"
+          IntType(s) -> "int " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
+        | FloatType(s) -> "float " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
+        | BoolType(s) -> "bool " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
+        | CharType(s) -> "char " ^ s ^ " = " ^ "'" ^ string_of_literal (snd globals) ^ "';"
         | StrType(s) -> "char " ^ s ^ "[" ^ 
                         string_of_int (String.length (string_of_literal(snd globals)) - 1) 
-                        ^ "]" ^ " = " ^ string_of_literal (snd globals)
+                        ^ "]" ^ " = " ^ string_of_literal (snd globals) ^ ";"
         | VoidType(s) -> ""
 
 let generate_code (vars, funcs) =
     "/* Code Generated from SMPL */\n" ^ includes ^
-    locks ^ threads ^
-    String.concat ";\n" (List.map convert_globals vars) ^ "\n" ^
-    String.concat "\n" (List.map string_of_fdecl funcs)
+    String.concat "\n" (List.map convert_globals vars) ^ "\n\n" ^
+    (List.fold_left (fun acc x -> acc ^ x) "" (snd (locks (3, [])))) ^ "\n" ^
+    String.concat "\n" (List.map string_of_fdecl funcs) ^ "\n" ^
+    (List.fold_left (fun acc x -> acc ^ x) "" (snd (threads (3, []))))
