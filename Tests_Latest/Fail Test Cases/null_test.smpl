@@ -1,0 +1,9 @@
+string s=null;
+int a=null;
+char c=null;
+
+main()
+{
+while(null)
+{}
+}

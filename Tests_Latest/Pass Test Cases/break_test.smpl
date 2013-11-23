@@ -1,0 +1,15 @@
+
+int count = 0; 
+
+void main()
+{ for(int i=0;i<10;i++);
+  count=count+1;
+  if(count==5)
+  { print("breaking");
+    break;
+  }
+  else
+ { print("continuing");
+   continue;
+ }
+}      

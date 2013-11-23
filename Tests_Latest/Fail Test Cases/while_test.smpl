@@ -1,0 +1,13 @@
+int i=10;
+
+main()
+{
+
+while(i!=0)
+{ print("%d",i)
+  i--;
+}
+
+while();
+
+} 
