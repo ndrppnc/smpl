@@ -1,0 +1,14 @@
+main()
+{ 
+    int i=0;
+    spawn
+    { 
+        while(i<100)
+        {
+            i=i+1; 
+        } 
+        print("Done");
+    }
+    barrier;
+    print ("The value of i is %d", i);
+}

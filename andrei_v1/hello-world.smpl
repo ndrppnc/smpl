@@ -1,0 +1,59 @@
+int itest = 13;
+float ftest = 1.0;
+char ctest = 'c';
+boolean btest = true;
+string stest = "I am working fine now\n";
+
+
+int main(int a, int b)
+{
+    /* test program */
+    print("Hello World.. I have arrived\n");
+    1+2;
+    2-1;
+    1*2;
+    1/2;
+    1%50;
+    x && y;
+    a || b;
+    x == y;
+    x != y;
+    x < y;
+    x <= y;
+    x >= y;
+    x > (y+20);    
+    x = 10;
+    int x = 10;    
+    int x;
+    my_function(arg1,arg2);
+    return "hello";
+    return 2*(3+5) > 2;
+    return true && false;
+    return false;
+    return true;
+    break;
+    {
+	printf("hello");
+	a = 5+5;
+    }
+
+    if(x > 0)
+      printf("Yay!");
+
+      if(x-2<3){
+        print(5);
+	int p = 2;
+      } else
+        print("Hello bitches");
+
+    while(true){
+       print("THIS IS INFINITY");
+    }
+
+    for(i=0; i<5; i = i+1)
+      lock sum = sum + i;
+
+      barrier;
+
+      spawn hello(a,b,c);
+}
