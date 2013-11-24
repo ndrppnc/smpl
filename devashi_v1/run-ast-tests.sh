@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SMPL="./smplc "
+SMPL="./smplc -c "
 
 files="test/*.smpl"
 
@@ -22,7 +22,6 @@ do
 		echo "Test: " $file " passed."
 	else
 		echo $file " failed to pass."
-		CleanUp
 		exit 1
 	fi
 done
