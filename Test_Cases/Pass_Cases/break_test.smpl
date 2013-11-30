@@ -2,8 +2,9 @@
 int count = 0; 
 
 void main()
-{ for(int i=0;i<10;i++);
-  count=count+1;
+{ for(i=0;i<10;i+1)
+  
+  {count=count+1;
   if(count==5)
   { print("breaking");
     break;
@@ -12,4 +13,4 @@ void main()
  { print("continuing");
    continue;
  }
-}      
+}  }    

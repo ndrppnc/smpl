@@ -1,7 +1,7 @@
 int a = 10;
 int b = 5;
-bool b1=true;
-bool b2=false;
+boolean b1=true;
+boolean b2=false;
 
 void main()
 {
@@ -26,7 +26,7 @@ if(a!=b)
 { print("a is not equal to b");
 }
 
-if(!(a!=b))
+if((a!=b))
 { print("a is equal to b");
 }
 

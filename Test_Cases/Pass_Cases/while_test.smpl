@@ -4,8 +4,8 @@ main()
 {
 
 while(i!=0)
-{ print("%d",i)
-  i--;
+{ print("%d",i);
+  i-1;
 }
 
 } 
