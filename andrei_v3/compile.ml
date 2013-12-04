@@ -137,8 +137,8 @@ let build_pfor_func (f,a,n) =
    number of locks, threads, and
    pfors -- in that order *)
 let myenv = Array.make 3 0
-let thread_funcs = Array.make 1 []
-let pfor_funcs = Array.make 1 []
+let thread_funcs = Array.make 2 []
+(*let pfor_funcs = Array.make 1 []*)
 
 let rec convert_stmt = function
     Expr(e) -> convert_expr e ^ ";\n"
