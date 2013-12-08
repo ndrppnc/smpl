@@ -21,7 +21,7 @@ type env = {
   }
 
 
-let print_debug = true
+let print_debug = false
 
 let validate_program (globalvars, funcs) =
     let id_of_data_type = function
