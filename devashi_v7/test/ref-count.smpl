@@ -1,0 +1,39 @@
+int itest = 13;
+float ftest = 1.0;
+char ctest = 'c';
+boolean btest = true;
+
+funca(int a, int a2)
+{
+    int int_funca;
+    printf(a, a2);
+    funcb("abc");
+}
+
+int main(int a, float b)
+{
+    /* test program */
+    int i;
+    int j;
+    int k;
+    funca(itest, ftest);
+    funca(btest, itest);
+    string stest;
+    int main_int;
+    funca(i,j);
+    funca(j,k);
+    printf("This is a string\" \t\n");
+    return;
+}
+
+funcb (string abc)
+{
+printf("got it");
+funcc();
+funcc();
+funca();
+}
+funcc()
+{
+return;
+}
