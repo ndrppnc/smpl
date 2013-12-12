@@ -194,51 +194,61 @@ let validate_program (globalvars, funcs) =
             let (var_type, ref_count) = try VarMap.find (fname_id, s) env.locals_map
                            with Not_found -> ("", 0) in
             if(var_type = "") then (
-                let var_type  = try VarMap.find (fname_id, s) env.formals_map
-                                with Not_found -> "" in
-                if(var_type = "") then (
-                    let (var_type, ref_count) = try StringMap.find s env.globals_map
-                                with Not_found -> ("", 0) in
-                    if(var_type = "") then (
-                        raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
-                            '" ^ fname_id ^ "' is not defined"))
-                    ) else (
-                        { env with globals_map =
-                            StringMap.add s (var_type, ref_count+1) env.globals_map
-                        }
-                    ))
-                else (
-                    env
-                )
+               	let var_type  = try VarMap.find (fname_id, s) env.formals_map
+                       	        with Not_found -> "" in
+               	if(var_type = "") then (
+            		let (var_type, ref_count) = try StringMap.find s env.globals_map
+                   	with Not_found -> ("", 0) in
+                    	if(var_type = "") then (
+                       		raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
+                            	'" ^ fname_id ^ "' is not defined"))
+                    	) else (
+                        	{ env with globals_map =
+                           	StringMap.add s (var_type, ref_count+1) env.globals_map
+                       	}
+                ))
+               	else (
+                   	env
+               	)
             ) else (
-            { env with locals_map =
-                VarMap.add (fname_id, s) (var_type, ref_count+1)
-                env.locals_map }
-            )
+		if(var_type <> "integer") then (
+			raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
+                                '" ^ fname_id ^ "' cannot be applied the ++ operation."))
+		) else (
+            		{ env with locals_map =
+                	VarMap.add (fname_id, s) (var_type, ref_count+1)
+                	env.locals_map }
+            	)
+	    )
 	| Mm(s) ->
-            let (var_type, ref_count) = try VarMap.find (fname_id, s) env.locals_map
+	    let (var_type, ref_count) = try VarMap.find (fname_id, s) env.locals_map
                            with Not_found -> ("", 0) in
             if(var_type = "") then (
                 let var_type  = try VarMap.find (fname_id, s) env.formals_map
                                 with Not_found -> "" in
                 if(var_type = "") then (
-                    let (var_type, ref_count) = try StringMap.find s env.globals_map
-                                with Not_found -> ("", 0) in
-                    if(var_type = "") then (
-                        raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
-                            '" ^ fname_id ^ "' is not defined"))
-                    ) else (
-                        { env with globals_map =
-                            StringMap.add s (var_type, ref_count+1) env.globals_map
+                        let (var_type, ref_count) = try StringMap.find s env.globals_map
+                        with Not_found -> ("", 0) in
+                        if(var_type = "") then (
+                                raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
+                                '" ^ fname_id ^ "' is not defined"))
+                        ) else (
+                                { env with globals_map =
+                                StringMap.add s (var_type, ref_count+1) env.globals_map
                         }
-                    ))
+                ))
                 else (
-                    env
+                        env
                 )
             ) else (
-            { env with locals_map =
-                VarMap.add (fname_id, s) (var_type, ref_count+1)
-                env.locals_map }
+                if(var_type <> "integer") then (
+                        raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
+                                '" ^ fname_id ^ "' cannot be applied the -- operation."))
+                ) else (
+                        { env with locals_map =
+                        VarMap.add (fname_id, s) (var_type, ref_count+1)
+                        env.locals_map }
+                )
             )
         | Call(s1, al) ->
                 let (var_type, ref_count) = try StringMap.find s1 env.functions_map
