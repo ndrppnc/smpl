@@ -3,26 +3,42 @@ float ftest = 1.0;
 char ctest = 'c';
 boolean btest = true;
 
-funca(int a1, int a2)
+funca(int a, int a2)
 {
-    print(a1, a2);
+    int int_funca;
+    printf(a, a2);
 }
 
 int main(int a, float b)
 {
     /* test program */
-    int i = 0;
+    int i;
+    i = 0;
+    int j;
+    j = 2*(i+3);
+    int k;
+    boolean b = !btest;
+    funca(itest, itest);
     string stest = "I am working fine now\n";
+    if(i<10 || i>5)
+    {
+        i = 9;
+    }
     for(i=10;i<20;i=i+1)
     {
-        print(itest, ftest, ctest, btest, a, b);
+        printf(itest, ftest, ctest, btest, a, b);
+        printf("%s %d\n", stest, 9);
         break;
     }
-    pfor(5;i=0;i<30;i=i+1)
+    int main_int;
+    pfor(i++;0;30)
     {
-        print(itest, ftest, ctest, btest, a, b);
+        printf(itest, ftest, ctest, btest, a, b);
     }
-    spawn(funca(5,3));
-    print("This is a string\" \t\n");
+    funca(i,j);
+    funca(j,k);
+    spawn funca(5,3);
+    printf("This is a string\" \t\n");
     barrier;
+    return 5;
 }

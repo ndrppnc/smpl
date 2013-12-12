@@ -18,6 +18,7 @@ let string_of_literal = function
 let rec string_of_expr = function
   Literal(l) -> string_of_literal l
   | Id(s) -> "ID:" ^ s
+  | Paren(s) -> "(" ^ string_of_expr s ^ ")"
   | Binop(e1, o, e2) -> "BINOP:" ^ string_of_expr e1 ^ " " ^
       (match o with
 	Add -> "PLUS"
@@ -33,7 +34,13 @@ let rec string_of_expr = function
       | Leq -> "LTE"
       | And -> "AND"
       | Or -> "OR") ^ " " ^ string_of_expr e2
-  | Assign(id,idx) -> "ASSIGN- " ^ id ^ "to: [" ^ string_of_expr idx ^ "]"
+  | Not(e1) -> "BINOP:" ^ "NOT" ^ string_of_expr e1
+  | Pp(id) -> "INCREMENT " ^ id
+  | Mm(id) -> "DECREMENT " ^ id
+  | Assign(id, idx) -> "ASSIGN- " ^ 
+      (match id with
+        Id(id) -> id
+        | _ -> "ERROR") ^ "to: [" ^ string_of_expr idx ^ "]"
   | Call(s1, al) -> "Call: " ^ s1 ^ ": (" ^ String.concat "," 
         (List.map (fun e -> string_of_expr e ) al) ^ ")"
   | Noexpr -> "NoExpr\n"
@@ -58,11 +65,10 @@ let rec string_of_stmt = function
 						^ " WHILE " ^ string_of_expr e 
 						^ " PERFORMING " ^ string_of_expr se ^ ";\n"
   | While (e, b) -> " WHILE " ^ string_of_expr e ^ " DO " ^ string_of_stmt b ^ ";\n"
-  | Pfor(t, s, e, se, b) -> "PFOR: Threads: " ^ string_of_expr t ^ "; " ^ string_of_expr s   
+  | Pfor(t, s, e, b) -> "PFOR: Threads: " ^ string_of_expr t ^ "; " ^ string_of_expr s   
 	          ^ " AND DO " ^ string_of_stmt b
-						^ " WHILE " ^ string_of_expr e 
-						^ " PERFORMING " ^ string_of_expr se ^ ";\n"
-  | Spawn(s) -> "Spawn: " ^ string_of_stmt s ^ "\n"
+						^ " WHILE " ^ string_of_expr e ^ ";\n"
+  | Spawn(e) -> "Spawn: " ^ string_of_expr e ^ "\n"
   | Lock(s) -> "Lock: " ^ string_of_stmt s ^ "\n"
   | Barrier(e) -> "Barrier: " ^ string_of_expr e ^ "\n"
 
@@ -73,7 +79,6 @@ let string_of_fdecl fdecl =
   "FUNCTION " ^ string_of_data_type fdecl.fname ^ "(" ^ 
     String.concat "," (List.map string_of_data_type fdecl.formals) ^ 
     ")\n{\n" ^
-    String.concat ";\n" (List.map string_of_data_type fdecl.locals) ^ 
   String.concat "" (List.map string_of_stmt fdecl.body) ^
   "}\n"
 

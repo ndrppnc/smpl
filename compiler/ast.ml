@@ -17,11 +17,15 @@ type literal =
   | String of string
 
 type expr =
-  Id of string
+    Id of string
   | Literal of literal
   | Binop of expr * op * expr
-  | Assign of string * expr
+  | Not of expr
+  | Pp of string
+  | Mm of string
+  | Assign of expr * expr
   | Call of string * expr list
+  | Paren of expr
   | Noexpr
 (* Add Array *)
 
@@ -35,15 +39,14 @@ type stmt =
   | If of expr * stmt * stmt
   | For of expr * expr * expr * stmt
   | While of expr * stmt
-  | Pfor of expr * expr * expr * expr * stmt
-  | Spawn of stmt (* Not Sure whether stmt or expr *)
+  | Pfor of expr * expr * expr * stmt
+  | Spawn of expr
   | Lock of stmt (* Not sure whether stmt or expr *)
   | Barrier of expr	
 
 type func_decl = {
     fname : data_type;
     formals : data_type list;
-    locals : data_type list;
     body : stmt list;
   }
 
