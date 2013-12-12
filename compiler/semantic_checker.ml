@@ -21,12 +21,12 @@ type env = {
   }
 
 
-let print_map = true
-let print_process_funcs = true
+let print_map = false
+let print_process_funcs = false
 
 let validate_program (globalvars, funcs) =
     let print_string str_to_print =
-        print_string ("/*" ^ str_to_print ^ "*/\n")
+        print_string ("/* " ^ str_to_print ^ " */\n")
     in let id_of_data_type = function
         IntType(s) -> s
         | FloatType(s) -> s
