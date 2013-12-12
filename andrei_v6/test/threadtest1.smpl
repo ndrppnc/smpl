@@ -1,0 +1,22 @@
+void main()
+{
+    int i = 0;
+    int sum = 0;
+    int n;
+    int t;
+    printf("Enter the number of threads t: ");
+    /* For now we don't support &
+     * As a special case we can append & during code generation for scanf
+     */
+    scanf("%d", t);
+    printf("Enter the upper bound n: ");
+    scanf("%d", n);
+    pfor(t; i=0;i < n; i=i+1)
+    {
+        lock {
+            sum = sum + i;
+        }
+    }
+    printf("The sum of the first %d numbers is %d.\n",
+           limit,sum);
+}
