@@ -208,10 +208,10 @@ let rec convert_stmt num_indent env currf = function
   | Block(s) -> if (List.length s = 0) then "" else (indent num_indent) ^ "{\n" ^ (List.fold_left (fun acc x -> 
           acc ^ convert_stmt (num_indent + 1) env currf x) "" s) ^ "}\n"
   | If(e, s, n) -> let else_block = convert_stmt num_indent env currf n in
- 		  if (else_block = "") then (indent num_indent) ^ "if(" ^ convert_expr e ^ ") " ^
+ 		  if (else_block = "") then (indent num_indent) ^ "if(" ^ convert_expr e ^ ")\n" ^
                   convert_stmt num_indent env currf s
- 		  else (indent num_indent) ^ "if(" ^ convert_expr e ^ ") " ^
-                  convert_stmt num_indent env currf s ^(indent num_indent) ^ "else " ^ else_block
+ 		  else (indent num_indent) ^ "if(" ^ convert_expr e ^ ")\n" ^
+                  convert_stmt num_indent env currf s ^(indent num_indent) ^ "else\n" ^ else_block
   | For(i, c, u, s) -> (indent num_indent) ^ "for(" ^ convert_expr i ^ "; " ^ convert_expr c ^ "; " ^
   convert_expr u ^ ") {" ^ convert_stmt (num_indent + 1) env currf s ^ "}\n"
   | While(e, s) -> (indent num_indent) ^ "while(" ^ convert_expr e ^ ")" ^ convert_stmt (num_indent + 1) env currf s
