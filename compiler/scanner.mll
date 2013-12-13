@@ -52,7 +52,7 @@ rule token = parse
 | ['0'-'9']+'.'['0'-'9']*('e'['-''+']?['0'-'9']+)? as lit { FLOAT_LIT(float_of_string lit) }
 | '.'['0'-'9']+('e'['-''+']?['0'-'9']+)? as lit { FLOAT_LIT(float_of_string lit) }
 | ['0'-'9']+'e'['-''+']?['0'-'9']+ as lit { FLOAT_LIT(float_of_string lit) }
-| '''['a'-'z']''' as lxm { CHAR_LIT(lxm.[1]) }
+| '''(_)''' as lxm { CHAR_LIT(lxm.[1]) }
 | '"'([^'"''\\']*('\\'_[^'"''\\']*)* as lxm)'"' { STRING_LIT(lxm) } 
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
