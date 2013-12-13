@@ -1,4 +1,5 @@
 open Ast
+open Str
 
 module VarMap = Map.Make(struct
                 type t = string * string
@@ -16,6 +17,7 @@ type env = {
     locals_map      : (string * int) VarMap.t; (*function name:local variable name -> type, ref_count *)
     unvisited_funcs : string list; (* maintains function call stack for getting ref_count *)
     visited_funcs   : string list; (* maintains list of visited functions *)
+    formals_list    : (string * data_type) list; (* needed as map stores in alphabetical order, not in order of insertion*)
     visited_all     : bool;
     valid_syntax    : bool
   }
@@ -101,6 +103,7 @@ let validate_program (globalvars, funcs) =
         locals_map = VarMap.empty;
         unvisited_funcs = ["main"];
         visited_funcs = [];
+        formals_list = [];
         visited_all = false;
         valid_syntax = false;
     }
@@ -110,10 +113,30 @@ let validate_program (globalvars, funcs) =
         ||(keyword = "pthread_mutex_t")||(keyword = "pthread_mutex_lock")
         ||(keyword = "pthread_mutex_unlock")||(keyword = "NULL")) then
             true
+        else (
+            let regex = Str.regexp ("\\(thread_.*\\)\\|\\(pfor_uppers_.*\\)"^
+            "\\|\\(pfor_lowers_*\\)\\|\\(pfor_args_*\\)\\|\\(pfor_limit_*\\)"^
+            "\\|\\(pfor_i_*\\)\\|\\(pfor_threads_*\\)\\|\\(pfor_init_*\\)"^
+            "\\|\\(num_threads_*\\)\\|\\(lock_*\\)")
+            in if(Str.string_match regex keyword 0) then
+                true
+            else
+                false
+        )
+    in let supported_typecasting type_left type_right =
+        if(type_left = "float" && (type_right =
+            "integer"||type_right = "boolean"||type_right = "char")) then
+            true
+        else if(type_left = "integer" && (type_right =
+                "boolean"||type_right = "char")) then
+            true
+        else if(type_left = "char" && type_right = "integer") then
+            true
         else
             false
 
-    (* For debugging *)
+
+    (* For debugging purposes *)
     in let print_global_map env =
         StringMap.iter (fun dt_key (vartype, ref) -> print_string ("Global var: id: " ^ 
         dt_key ^ " type=" ^ vartype ^ " ref=" ^ (string_of_int ref)))
@@ -129,13 +152,18 @@ let validate_program (globalvars, funcs) =
         ) env.locals_map
     in let print_formals_map env =
         VarMap.iter (fun (dt_func, dt_arg) (arg_type) ->
-            print_string ("Arguments Func: " ^ dt_func ^ " arg: " ^ dt_arg ^ " type: " ^
+            print_string ("Map Arguments Func: " ^ dt_func ^ " arg: " ^ dt_arg ^ " type: " ^
             arg_type)
         ) env.formals_map
+    in let print_formals_list env =
+        List.iter (fun (fname_id, arg) ->
+            print_string ("List Arguments Func: " ^ fname_id ^ " arg: " ^
+            (id_of_data_type arg) ^ " type: " ^ (get_data_type arg))
+        ) env.formals_list
     in let print_unvisited_funcs env =
-        List.iter (fun f -> print_string ("unvisited: "^f);print_newline()) env.unvisited_funcs
+        List.iter (fun f -> print_string ("unvisited: "^f)) env.unvisited_funcs
     in let print_visited_funcs env = 
-        List.iter (fun f -> print_string ("visited: "^f);print_newline()) env.visited_funcs
+        List.iter (fun f -> print_string ("visited: "^f)) env.visited_funcs
     
 
     in let validate_global variable =
@@ -162,22 +190,26 @@ let validate_program (globalvars, funcs) =
                     ^ "used as an argument name"))
         else(
             let found = VarMap.mem (fname_id, id_arg) env.formals_map in
-            if(found = false) then
-                { env with formals_map =
+            if(found = false) then (
+                let new_env = { env with formals_list =
+                    (fname_id, arg) :: env.formals_list }
+                in
+                { new_env with formals_map =
                     VarMap.add (fname_id, id_arg) (get_data_type arg)
-                    env.formals_map }
+                    new_env.formals_map }
+            )
             else
                 raise (Failure ("Function " ^ fname_id ^
                 " contains more than one argument with the name " ^ id_arg))
         )
     
     in let get_func_formals_list fname_id env =
-        VarMap.fold (fun (dt_func, dt_arg) (arg_type) arg_tuple ->
+        List.fold_left (fun arg_list (dt_func, arg) ->
             if(dt_func = fname_id) then
-                (dt_arg, arg_type)::arg_tuple
+                arg :: arg_list
             else
-                arg_tuple
-        ) env.formals_map []
+                arg_list
+        ) [] env.formals_list
 
 
 
@@ -192,7 +224,7 @@ let validate_program (globalvars, funcs) =
         | Assign(id, idx) -> 
                 let new_env = process_expr fname_id env id in
                 process_expr fname_id new_env idx
-        | Id(s) -> 
+        | Id(s)| Pp(s)| Mm(s) -> 
             let (var_type, ref_count) = try VarMap.find (fname_id, s) env.locals_map
                            with Not_found -> ("", 0) in
             if(var_type = "") then (
@@ -216,66 +248,6 @@ let validate_program (globalvars, funcs) =
             { env with locals_map = 
                 VarMap.add (fname_id, s) (var_type, ref_count+1)
                 env.locals_map } 
-            )
-	| Pp(s) ->
-            let (var_type, ref_count) = try VarMap.find (fname_id, s) env.locals_map
-                           with Not_found -> ("", 0) in
-            if(var_type = "") then (
-               	let var_type  = try VarMap.find (fname_id, s) env.formals_map
-                       	        with Not_found -> "" in
-               	if(var_type = "") then (
-            		let (var_type, ref_count) = try StringMap.find s env.globals_map
-                   	with Not_found -> ("", 0) in
-                    	if(var_type = "") then (
-                       		raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
-                            	'" ^ fname_id ^ "' is not defined"))
-                    	) else (
-                        	{ env with globals_map =
-                           	StringMap.add s (var_type, ref_count+1) env.globals_map
-                       	}
-                ))
-               	else (
-                   	env
-               	)
-            ) else (
-		if(var_type <> "integer") then (
-			raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
-                                '" ^ fname_id ^ "' cannot be applied the ++ operation."))
-		) else (
-            		{ env with locals_map =
-                	VarMap.add (fname_id, s) (var_type, ref_count+1)
-                	env.locals_map }
-            	)
-	    )
-	| Mm(s) ->
-	    let (var_type, ref_count) = try VarMap.find (fname_id, s) env.locals_map
-                           with Not_found -> ("", 0) in
-            if(var_type = "") then (
-                let var_type  = try VarMap.find (fname_id, s) env.formals_map
-                                with Not_found -> "" in
-                if(var_type = "") then (
-                        let (var_type, ref_count) = try StringMap.find s env.globals_map
-                        with Not_found -> ("", 0) in
-                        if(var_type = "") then (
-                                raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
-                                '" ^ fname_id ^ "' is not defined"))
-                        ) else (
-                                { env with globals_map =
-                                StringMap.add s (var_type, ref_count+1) env.globals_map
-                        }
-                ))
-                else (
-                        env
-                )
-            ) else (
-                if(var_type <> "integer") then (
-                        raise (Failure ("Variable '" ^ s ^ "' " ^ "in function
-                                '" ^ fname_id ^ "' cannot be applied the -- operation."))
-                ) else (
-                        { env with locals_map =
-                        VarMap.add (fname_id, s) (var_type, ref_count+1)
-                        env.locals_map }
-                )
             )
         | Call(s1, al) ->
                 let (var_type, ref_count) = try StringMap.find s1 env.functions_map
@@ -333,7 +305,11 @@ let validate_program (globalvars, funcs) =
                 let first_env = process_expr (id_of_data_type fname) env exp
                 in process_func_body fname first_env body
         | Pfor(threads, init, cond, body) ->
-                env (* TODO: For debugging *)
+                let first_env = process_expr (id_of_data_type fname) env threads
+                in let second_env = process_expr (id_of_data_type fname) first_env init
+                in let third_env = process_expr (id_of_data_type fname)
+                second_env cond
+                in process_func_body fname third_env body
         | Spawn(exp) -> process_expr (id_of_data_type fname) env exp
         | Lock(stmt) -> process_func_body fname env stmt
         | Barrier(exp) -> env
@@ -426,13 +402,7 @@ let validate_program (globalvars, funcs) =
                             fname_id))
                 )
                 in if(type_id <> type_right) then (
-                    if(type_id = "float" && (type_right =
-                        "integer"||type_right = "boolean"||type_right = "char")) then
-                        type_id
-                    else if(type_id = "integer" && (type_right =
-                        "boolean"||type_right = "char")) then
-                        type_id
-                    else if(type_id = "char" && type_right = "integer") then
+                    if((supported_typecasting type_id type_right) = true) then
                         type_id
                     else
                         raise (Failure ("Type mismatch:" ^ type_id ^ " variable "
@@ -440,7 +410,7 @@ let validate_program (globalvars, funcs) =
                             " in function " ^ fname_id)))
                 else
                     type_id
-        | Id(s)| Pp(s) | Mm(s) -> 
+        | Id(s) -> 
                 let (var_type, _) = try VarMap.find (fname_id, s) env.locals_map
                                     with Not_found -> ("", 0) in
                 if(var_type = "") then (
@@ -458,6 +428,42 @@ let validate_program (globalvars, funcs) =
                         var_type
                 ) else
                     var_type
+        | Pp(s)|Mm(s) ->
+                let (var_type, _) = try VarMap.find (fname_id, s) env.locals_map
+                                    with Not_found -> ("", 0) in
+                if(var_type = "") then (
+                    let var_type  = try VarMap.find (fname_id, s) env.formals_map 
+                                    with Not_found -> "" in
+                    if(var_type = "") then (
+                        let (var_type, ref_count) = try StringMap.find s env.globals_map
+                                                    with Not_found -> ("", 0) in
+                        if(var_type = "") then (
+                            raise (Failure ("Variable '" ^ s ^ "' " ^ "in function '" ^ 
+                                            fname_id ^ "' is not defined"))
+                         ) else (
+                             if(var_type <> "integer") then
+                                 raise (Failure ("Function: '" ^ fname_id ^ "': Variable '" 
+                                 ^ s ^ "' " ^ "is of type " ^ var_type ^
+                                 ". However ++ and -- are supported only for integers"))
+                             else
+                                 var_type
+                         )
+                    ) else (
+                        if(var_type <> "integer") then
+                            raise (Failure ("Function: '" ^ fname_id ^ "': Variable '" 
+                                 ^ s ^ "' " ^ "is of type " ^ var_type ^
+                                 ". However ++ and -- are supported only for integers"))
+                        else
+                            var_type
+                    )
+                ) else (
+                    if(var_type <> "integer") then
+                        raise (Failure ("Function: '" ^ fname_id ^ "': Variable '" 
+                                 ^ s ^ "' " ^ "is of type " ^ var_type ^
+                                 ". However ++ and -- are supported only for integers"))
+                    else
+                        var_type
+                )
         | Call(s1, al) ->
                 let (var_type, _) = try StringMap.find s1 env.functions_map
                                             with Not_found -> ("", 0) in
@@ -467,14 +473,14 @@ let validate_program (globalvars, funcs) =
                     if(s1 = "printf") then
                         var_type
                     else (
-                        let arg_tuple_list = List.rev (get_func_formals_list s1 env)
-                        in let _ = try (List.iter2 (fun (a,t) arg -> 
-                            let a_type = verify_expr fname_id env arg in
-                                if(t <> a_type) then (  
+                        let arg_list = get_func_formals_list s1 env
+                        in let _ = try (List.iter2 (fun arg value -> 
+                            let a_type = verify_expr fname_id env value in
+                                if(get_data_type(arg) <> a_type) then (  
                                     raise(Failure ("Function "^fname_id^": call to:"^s1^
-                                    " arg "^a^" is of type "^t^
+                                    " arg "^(id_of_data_type arg)^" is of type "^(get_data_type arg)^
                                     " but it is called with type "^a_type)))
-                            )arg_tuple_list al)
+                            )arg_list al)
                             with Invalid_argument(s) ->
                                 (raise(Failure (fname_id^": call to:"^s1^
                                 " number of arguments don't match")))
@@ -526,9 +532,12 @@ let validate_program (globalvars, funcs) =
                 in if(get_data_type (decl) = assign_type) then
                     ""
                 else
-                    raise (Failure ("Local variable " ^ string_of_data_type (decl)
-                        ^ " is assigned a " ^ assign_type ^ " in function " ^
-                        id_of_data_type (fname)))
+                    if((supported_typecasting (get_data_type (decl)) assign_type)) then
+                        ""
+                    else
+                        raise (Failure ("Local variable " ^ string_of_data_type (decl)
+                            ^ " is assigned a " ^ assign_type ^ " in function " ^
+                            id_of_data_type (fname)))
                 )
         | If (cond, then_clause, else_clause) ->
                 let _ = verify_expr (id_of_data_type fname) env cond
@@ -546,9 +555,36 @@ let validate_program (globalvars, funcs) =
                 in let _ = verify_func_body fname env "" body
                 in ""
         | Pfor(threads, init, cond, body) ->
-                "" (* TODO: For debugging *)
+                let data_type = 
+                    verify_expr (id_of_data_type fname) env threads
+                in if(data_type <> "integer") then
+                    raise (Failure ("Function:"^(id_of_data_type fname)^
+                        " First argument to pfor should be of type integer"))
+                else (
+                    let data_type = verify_expr (id_of_data_type fname) env init
+                    in if(data_type <> "integer") then
+                        raise (Failure ("Function:"^(id_of_data_type fname)^
+                        " Second argument to pfor should be of type integer"))
+                    else (
+                        let data_type = verify_expr (id_of_data_type fname) env cond
+                        in if(data_type <> "integer") then
+                            raise (Failure ("Function:"^(id_of_data_type fname)^
+                            " Third argument to pfor should be of type integer"))
+                        else (
+                            let _ = verify_func_body fname env "" body
+                            in ""
+                        )
+                    )
+                )
         | Spawn(exp) ->
-                let _ = verify_expr (id_of_data_type fname) env exp
+                let _ = match exp with
+                Call(s1, al) -> if(s1 = "printf") then
+                                    raise (Failure ("Function:'"^(id_of_data_type
+                                    fname)^ "' printf is not allowed in spawn"))
+                | _ -> raise (Failure ("Function:'"^(id_of_data_type fname)^
+                        "' Invalid spawn syntax. spawn accepts" ^
+                        " only function calls"))
+                in let _ = verify_expr (id_of_data_type fname) env exp
                 in ""
         | Lock(stmt) ->
                 let _ = verify_func_body fname env "" stmt
@@ -580,7 +616,8 @@ let validate_program (globalvars, funcs) =
         let _ = print_global_map second_env in
         let _ = print_function_map second_env in
         let _ = print_locals_map second_env in
-        let _ = print_formals_map second_env
+        let _ = print_formals_map second_env in
+        let _ = print_formals_list second_env
         in final_env second_env true)
     else (
         final_env second_env true)
