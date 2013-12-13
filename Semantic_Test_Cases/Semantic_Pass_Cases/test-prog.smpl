@@ -1,0 +1,28 @@
+int itest = 13;
+float ftest = 1.0;
+char ctest = 'c';
+boolean btest = true;
+
+funca(int a1, int a2)
+{
+    printf(a1, a2);
+}
+
+int main(int a, float b)
+{
+    /* test program */
+    int i = 0;
+    string stest = "I am working fine now\n";
+    for(i=10;i<20;i++)
+    {
+        printf(itest, ftest, ctest, btest, a, b);
+        break;
+    }
+    pfor(5;30;320)
+    {
+        printf(itest, ftest, ctest, btest, a, b);
+    }
+ /*   spawn(funca(5,3));*/
+    printf("This is a string\" \t\n");
+    barrier;
+}

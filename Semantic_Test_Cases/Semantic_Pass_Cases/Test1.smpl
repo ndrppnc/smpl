@@ -1,0 +1,21 @@
+int a=1;
+int k=2;
+int c=3;
+int b=12;
+char d='a';
+
+fun()
+{ if(a-b)
+{c=4;}
+else
+{m=c;}
+}
+
+
+main()
+{ if(a-b)
+{c=4;}
+else
+{d=c;}
+
+}

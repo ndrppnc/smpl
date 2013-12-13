@@ -1,0 +1,7 @@
+fn()
+{ int a;
+  int b=c+a;
+}
+main()
+{ fn();
+}

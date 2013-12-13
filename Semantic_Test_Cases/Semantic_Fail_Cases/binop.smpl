@@ -1,0 +1,5 @@
+string s="hello";
+string s1="world";
+main()
+{ s1=s+s1;
+}

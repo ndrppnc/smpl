@@ -1,0 +1,8 @@
+fn(int a,int a)
+{}
+
+main()
+{int a=10;
+int b=10;
+fn(a,b);
+}
