@@ -34,6 +34,7 @@ type stmt =
   | Expr of expr
   | Return of expr
   | Break of expr
+  | Continue of expr
   | Declare of data_type
   | DeclareAssign of data_type * expr
   | If of expr * stmt * stmt

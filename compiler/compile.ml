@@ -203,6 +203,7 @@ let rec convert_stmt env currf = function
                   	   ) else ("")
   | Return(e) -> "return " ^ convert_expr e ^ ";\n"
   | Break(e) -> "break;\n"
+  | Continue(e) -> "continue;\n"
   | Block(s) -> if (List.length s = 0) then "" else "{\n" ^ (List.fold_left (fun acc x -> acc ^ convert_stmt env currf x) "" s) ^ "}\n"
   | If(e, s, n) -> let else_block = convert_stmt env currf n in
  		  if (else_block = "") then "if(" ^ convert_expr e ^ ") " ^ convert_stmt env currf s

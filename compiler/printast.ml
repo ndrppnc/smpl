@@ -51,6 +51,7 @@ let rec string_of_stmt = function
   | Expr(e) -> "EXPR: [" ^ string_of_expr e ^ "]\n"
   | Return(e) -> "RETURN " ^ string_of_expr e ^ ";\n"
   | Break(e) -> "BREAK " ^ string_of_expr e ^ ";\n"
+  | Continue(e) -> "CONTINUE " ^ string_of_expr e ^ ";\n"
   | Declare(d) -> "Declare " ^ string_of_data_type d ^ ";\n"
   | DeclareAssign(d, e) -> "DeclareAssign " ^ string_of_data_type d ^ 
                             ": AND Assign: " ^ string_of_expr e ^ ";\n"

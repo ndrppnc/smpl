@@ -287,6 +287,7 @@ let validate_program (globalvars, funcs) =
         | Expr(exp) -> process_expr (id_of_data_type fname) env exp
         | Return(exp) -> process_expr (id_of_data_type fname) env exp
         | Break(_) -> env
+        | Continue(_) -> env
         | Declare(decl) -> 
             add_local_var_to_map (id_of_data_type fname) decl env
         | DeclareAssign(decl, exp) -> 
@@ -353,12 +354,12 @@ let validate_program (globalvars, funcs) =
         else
             new_env
     
-    in let rec verify_expr fname_id env = function
+    in let rec verify_expr fname_id env is_in_loop = function
         Literal(l) -> get_literal_type(l)
-        | Paren(s) -> verify_expr fname_id env s
+        | Paren(s) -> verify_expr fname_id env is_in_loop s
         | Binop(e1, o, e2) ->
-                let type_e1 = verify_expr fname_id env e1
-                in let type_e2 = verify_expr fname_id env e2
+                let type_e1 = verify_expr fname_id env is_in_loop e1
+                in let type_e2 = verify_expr fname_id env is_in_loop e2
                 in (match o with
                   Add|Sub|Mult|Div|Mod -> 
                         if((type_e1 = "string") || (type_e2 = "string")) then
@@ -394,8 +395,8 @@ let validate_program (globalvars, funcs) =
                 )
         | Not(e) -> "boolean"
         | Assign(id, idx) ->
-                let type_id = verify_expr fname_id env id
-                in let type_right = verify_expr fname_id env idx
+                let type_id = verify_expr fname_id env is_in_loop id
+                in let type_right = verify_expr fname_id env is_in_loop idx
                 in let id_name = (match id with
                     Id(s) -> s
                     | _ -> raise (Failure ("Unexpected error in function " ^
@@ -475,7 +476,7 @@ let validate_program (globalvars, funcs) =
                     else (
                         let arg_list = get_func_formals_list s1 env
                         in let _ = try (List.iter2 (fun arg value -> 
-                            let a_type = verify_expr fname_id env value in
+                            let a_type = verify_expr fname_id env is_in_loop value in
                                 if(get_data_type(arg) <> a_type) then (  
                                     raise(Failure ("Function "^fname_id^": call to:"^s1^
                                     " arg "^(id_of_data_type arg)^" is of type "^(get_data_type arg)^
@@ -490,13 +491,14 @@ let validate_program (globalvars, funcs) =
 
         | Noexpr -> ""
     
-    in let rec verify_func_body fname env data_type = function
+    in let rec verify_func_body fname env data_type is_in_loop = function
         Block(stmts) ->
             List.fold_left (fun new_data_type line ->
-                verify_func_body fname env new_data_type line) data_type stmts
-        | Expr(exp) -> verify_expr (id_of_data_type fname) env exp
+                verify_func_body fname env new_data_type is_in_loop line) data_type stmts
+        | Expr(exp) -> verify_expr (id_of_data_type fname) env is_in_loop exp
         | Return(exp) -> 
-                let return_type = verify_expr (id_of_data_type fname) env exp
+                let return_type = verify_expr (id_of_data_type fname) env
+                is_in_loop exp
                 in let func_return_type = get_data_type (fname)
                 in if((func_return_type = return_type) || (func_return_type =
                     "void" && return_type = "" )) then
@@ -511,8 +513,20 @@ let validate_program (globalvars, funcs) =
                         id_of_data_type (fname) ^ " is " ^ func_return_type ^
                         " but it returns " ^ return_type ^ " type"))
                 )
-        | Break(_) -> "" (*TODO: Check whether this is within a loop *)
-        | Declare(decl) -> (*TODO: Throw a warning if global or arg is
+        | Break(_) -> 
+                if(is_in_loop) then
+                        ""
+                else
+                    raise (Failure ("Function:'"^ id_of_data_type (fname) ^ 
+                    "' break statement not within a loop"))
+        | Continue(_) -> 
+                if(is_in_loop) then
+                        ""
+                else
+                    raise (Failure ("Function:'"^ id_of_data_type (fname) ^ 
+                    "' continue statement not within a loop"))
+        | Declare(decl) -> 
+                (*TODO: Throw a warning if global or arg is
         defined with same name *)
                 let func_name = id_of_data_type decl in  
                 if(reserved_keyword func_name) then
@@ -522,13 +536,16 @@ let validate_program (globalvars, funcs) =
                 else
                     ""
         | DeclareAssign(decl, exp) ->
+                (*TODO: Throw a warning if global or arg is
+        defined with same name *)
                 let func_name = id_of_data_type decl in  
                 if(reserved_keyword func_name) then
                     raise (Failure ("Function:"^id_of_data_type(fname)^": '"
                     ^ func_name ^ "' is a reserved keyword. It cannot be " 
                     ^ "used as a variable name"))
                 else(
-                let assign_type = verify_expr (id_of_data_type fname) env exp
+                let assign_type = verify_expr (id_of_data_type fname) env
+                is_in_loop exp
                 in if(get_data_type (decl) = assign_type) then
                     ""
                 else
@@ -540,38 +557,40 @@ let validate_program (globalvars, funcs) =
                             id_of_data_type (fname)))
                 )
         | If (cond, then_clause, else_clause) ->
-                let _ = verify_expr (id_of_data_type fname) env cond
-                in let _ = verify_func_body fname env "" then_clause
-                in let _ = verify_func_body fname env "" else_clause
+                let _ = verify_expr (id_of_data_type fname) env is_in_loop cond
+                in let _ = verify_func_body fname env "" is_in_loop then_clause
+                in let _ = verify_func_body fname env "" is_in_loop else_clause
                 in ""
         | For (init, cond, inc, body) -> 
-                let _ = verify_expr (id_of_data_type fname) env init
-                in let _ = verify_expr (id_of_data_type fname) env cond
-                in let _ = verify_expr (id_of_data_type fname) env inc
-                in let _ = verify_func_body fname env "" body
+                let _ = verify_expr (id_of_data_type fname) env is_in_loop init
+                in let _ = verify_expr (id_of_data_type fname) env is_in_loop cond
+                in let _ = verify_expr (id_of_data_type fname) env is_in_loop inc
+                in let _ = verify_func_body fname env "" true body
                 in ""
         | While (exp, body) ->
-                let _ = verify_expr (id_of_data_type fname) env exp
-                in let _ = verify_func_body fname env "" body
+                let _ = verify_expr (id_of_data_type fname) env is_in_loop exp
+                in let _ = verify_func_body fname env "" true body
                 in ""
         | Pfor(threads, init, cond, body) ->
                 let data_type = 
-                    verify_expr (id_of_data_type fname) env threads
+                    verify_expr (id_of_data_type fname) env is_in_loop threads
                 in if(data_type <> "integer") then
                     raise (Failure ("Function:"^(id_of_data_type fname)^
                         " First argument to pfor should be of type integer"))
                 else (
-                    let data_type = verify_expr (id_of_data_type fname) env init
+                    let data_type = verify_expr (id_of_data_type fname) env
+                    is_in_loop init
                     in if(data_type <> "integer") then
                         raise (Failure ("Function:"^(id_of_data_type fname)^
                         " Second argument to pfor should be of type integer"))
                     else (
-                        let data_type = verify_expr (id_of_data_type fname) env cond
+                        let data_type = verify_expr (id_of_data_type fname) env
+                        is_in_loop cond
                         in if(data_type <> "integer") then
                             raise (Failure ("Function:"^(id_of_data_type fname)^
                             " Third argument to pfor should be of type integer"))
                         else (
-                            let _ = verify_func_body fname env "" body
+                            let _ = verify_func_body fname env "" true body
                             in ""
                         )
                     )
@@ -584,16 +603,16 @@ let validate_program (globalvars, funcs) =
                 | _ -> raise (Failure ("Function:'"^(id_of_data_type fname)^
                         "' Invalid spawn syntax. spawn accepts" ^
                         " only function calls"))
-                in let _ = verify_expr (id_of_data_type fname) env exp
+                in let _ = verify_expr (id_of_data_type fname) env is_in_loop exp
                 in ""
         | Lock(stmt) ->
-                let _ = verify_func_body fname env "" stmt
+                let _ = verify_func_body fname env "" is_in_loop stmt
                 in ""
         | Barrier(exp) -> ""
 
     in let verify_function env str_dt fdecl =
         List.fold_left (fun str_data_type line ->
-            verify_func_body fdecl.fname env str_data_type line
+            verify_func_body fdecl.fname env str_data_type false line
             ) str_dt fdecl.body
 
     in let final_env curr_env valid =

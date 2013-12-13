@@ -34,6 +34,7 @@ rule token = parse
 | "while"   { WHILE }
 | "return"  { RETURN }
 | "break"   { BREAK }
+| "continue"{ CONTINUE }
 | "spawn"   { SPAWN }
 | "lock"    { LOCK }
 | "barrier" { BARRIER }
