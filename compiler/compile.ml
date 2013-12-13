@@ -92,11 +92,11 @@ let rec convert_expr = function
         		(List.map (fun e -> convert_expr e ) al) ^ ")")
   | Noexpr -> ""
 
-let rec tabs (n,s) =
+let rec indent n =
 	if n = 1 then
-	  (1,s^"\t")
+	  "    "
 	else
-	  tabs (n-1,s^"\t")
+	  "    "^indent(n-1)
 
 let build_args (a,n) =
 	let list_size = List.length a in
@@ -131,7 +131,7 @@ let rec build_vars (f,n,counter,s,k,env) =
 		test.(0) <- test.(0)+1
           ) env.Semantic_checker.formals_map); data_type.(0)
 	in
-	let my_var = "\t" ^ var_type ^ " var" ^ (string_of_int (n-1)) ^ " = *(" ^ var_type ^ " *)arg_list[" ^ (string_of_int (n-1)) ^ "];\n" in
+	let my_var = (indent 1) ^ var_type ^ " var" ^ (string_of_int (n-1)) ^ " = *(" ^ var_type ^ " *)arg_list[" ^ (string_of_int (n-1)) ^ "];\n" in
         if n = 1 then
           (1,my_var ^ s)
         else
@@ -141,11 +141,11 @@ let build_thread_func (f,a,n,env) =
 	let list_size = List.length a in
 	"void *thread_" ^ n ^ "(void *args){\n" ^
         (if list_size > 0 then
-	  "\tvoid **arg_list = (void **)args;\n" ^ 
+	  (indent 1) ^"void **arg_list = (void **)args;\n" ^ 
           (snd (build_vars (f,list_size,list_size,"",0,env)))
         else
           "") ^
-	"\t" ^ f ^ "(" ^
+	(indent 1) ^ f ^ "(" ^
 	(if list_size > 0 then
 	  ("var0" ^ (fst (List.fold_left (fun (acc, k) x -> (acc ^ ",var" ^ (string_of_int k), k+1)) ("",1) (List.tl a))) ^ ");\n")
 	else
@@ -166,16 +166,17 @@ let build_pfor (n,i,l,c) =
 	"int pfor_args_" ^ k ^ "[num_threads_" ^ k ^ "][2];\n" ^
 	"int pfor_i_" ^ k ^ ";\n\n" ^
 	"for(pfor_i_" ^ k ^ "=0;pfor_i_" ^ k ^ "<num_threads_" ^ k ^ ";pfor_i_" ^ k ^ "++){\n" ^
-	"\tpfor_uppers_" ^ k ^ "[pfor_i_" ^ k ^ "] = pfor_init_" ^ k ^ "+((pfor_init_" ^ k ^ "+pfor_limit_" ^ k ^ ")/num_threads_" ^ k ^ ")*(pfor_i_" ^ k ^ "+1)+((pfor_init_" ^ k ^ "+pfor_limit_" ^ k ^ ")%num_threads_" ^ k ^ ");\n" ^
-	"\tpfor_lowers_" ^ k ^ "[pfor_i_" ^ k ^ "] = pfor_init_" ^ k ^ "+((pfor_init_" ^ k ^ "+pfor_limit_" ^ k ^ ")/num_threads_" ^ k ^ ")*pfor_i_" ^ k ^ ";\n" ^
-	"\tpfor_args_" ^ k ^ "[pfor_i_" ^ k ^ "][0] = pfor_lowers_" ^ k ^ "[pfor_i_" ^ k ^ "];\n" ^
-	"\tpfor_args_" ^ k ^ "[pfor_i_" ^ k ^ "][1] = pfor_uppers_" ^ k ^ "[pfor_i_" ^ k ^ "];\n" ^
+	(indent 1) ^"pfor_uppers_" ^ k ^ "[pfor_i_" ^ k ^ "] = pfor_init_" ^ k ^ "+((pfor_init_" ^ k ^ "+pfor_limit_" ^ k ^ ")/num_threads_" ^ k ^ ")*(pfor_i_" ^ k ^ "+1)+((pfor_init_" ^ k ^ "+pfor_limit_" ^ k ^ ")%num_threads_" ^ k ^ ");\n" ^
+	(indent 1) ^"pfor_lowers_" ^ k ^ "[pfor_i_" ^ k ^ "] = pfor_init_" ^ k ^ "+((pfor_init_" ^ k ^ "+pfor_limit_" ^ k ^ ")/num_threads_" ^ k ^ ")*pfor_i_" ^ k ^ ";\n" ^
+	(indent 1) ^"pfor_args_" ^ k ^ "[pfor_i_" ^ k ^ "][0] = pfor_lowers_" ^ k ^ "[pfor_i_" ^ k ^ "];\n" ^
+	(indent 1) ^"pfor_args_" ^ k ^ "[pfor_i_" ^ k ^ "][1] = pfor_uppers_" ^ k ^ "[pfor_i_" ^ k ^ "];\n" ^
 	"}\n\n" ^
 	"for(pfor_i_" ^ k ^ "=0;pfor_i_" ^ k ^ "<num_threads_" ^ k ^ ";pfor_i_" ^ k ^ "++){\n" ^
-	"\tpthread_create(&pfor_threads_" ^ k ^ "[pfor_i_" ^ k ^ "],NULL,thread_" ^ k ^ ",(void *)&pfor_args_" ^ k ^ "[pfor_i_" ^ k ^ "]);\n" ^
+	(indent 1) ^ "pthread_create(&pfor_threads_" ^ k ^ "[pfor_i_" ^ k ^ "],NULL,thread_" ^ k ^ 
+        ",(void *)&pfor_args_" ^ k ^ "[pfor_i_" ^ k ^ "]);\n" ^
 	"}\n\n" ^
 	"for(pfor_i_" ^ k ^ "=0;pfor_i_" ^ k ^ "<num_threads_" ^ k ^ ";pfor_i_" ^ k ^ "++){\n" ^
-	"\tpthread_join(pfor_threads_" ^ k ^ "[pfor_i_" ^ k ^ "],NULL);\n" ^
+	(indent 1) ^ "pthread_join(pfor_threads_" ^ k ^ "[pfor_i_" ^ k ^ "],NULL);\n" ^
   	"}\n"
 
 (* my env stores couters for the
@@ -185,35 +186,41 @@ let myenv = Array.make 3 0
 let thread_funcs = Array.make 2 []
 (*let pfor_funcs = Array.make 1 []*)
 
-let rec convert_stmt env currf = function
-    Expr(e) -> convert_expr e ^ ";\n"
+let rec convert_stmt num_indent env currf = function
+    Expr(e) -> indent num_indent ^ convert_expr e ^ ";\n"
   | Declare(e) -> let data_type = e in
         	  let var_id = id_of_data_type data_type in
         	  let (var_type, ref_count) = try Semantic_checker.VarMap.find
         	  (currf,var_id) env.Semantic_checker.locals_map with Not_found -> (var_id, 0) in
         	  if(ref_count <> 0) then (
-	   	     string_of_data_type e ^ ";\n"
+	   	     indent num_indent ^ string_of_data_type e ^ ";\n"
         	  ) else ("") 
   | DeclareAssign(a, b) -> let data_type = a in
                   	   let var_id = id_of_data_type data_type in
                   	   let (var_type, ref_count) = try Semantic_checker.VarMap.find
                   	   (currf,var_id) env.Semantic_checker.locals_map with Not_found -> (var_id, 0) in
                   	   if(ref_count <> 0) then (
-                     		string_of_data_type a ^ "=" ^ convert_expr b ^ ";\n"
+                     		indent num_indent ^ string_of_data_type a ^ "=" ^ convert_expr b ^ ";\n"
                   	   ) else ("")
-  | Return(e) -> "return " ^ convert_expr e ^ ";\n"
-  | Break(e) -> "break;\n"
-  | Continue(e) -> "continue;\n"
-  | Block(s) -> if (List.length s = 0) then "" else "{\n" ^ (List.fold_left (fun acc x -> acc ^ convert_stmt env currf x) "" s) ^ "}\n"
-  | If(e, s, n) -> let else_block = convert_stmt env currf n in
- 		  if (else_block = "") then "if(" ^ convert_expr e ^ ") " ^ convert_stmt env currf s
- 		  else "if(" ^ convert_expr e ^ ") " ^ convert_stmt env currf s ^ "else " ^ else_block
-  | For(i, c, u, s) -> "for(" ^ convert_expr i ^ "; " ^ convert_expr c ^ "; " ^ convert_expr u ^ "){" ^ convert_stmt env currf s ^ "}\n"
-  | While(e, s) -> "while(" ^ convert_expr e ^ ")" ^ convert_stmt env currf s
+  | Return(e) -> indent num_indent ^ "return " ^ convert_expr e ^ ";\n"
+  | Break(e) -> indent num_indent ^ "break;\n"
+  | Continue(e) -> indent num_indent ^ "continue;\n"
+  | Block(s) -> if (List.length s = 0) then "" else (indent num_indent) ^ "{\n" ^ (List.fold_left (fun acc x -> 
+          acc ^ convert_stmt (num_indent + 1) env currf x) "" s) ^ "}\n"
+  | If(e, s, n) -> let else_block = convert_stmt num_indent env currf n in
+ 		  if (else_block = "") then (indent num_indent) ^ "if(" ^ convert_expr e ^ ") " ^
+                  convert_stmt num_indent env currf s
+ 		  else (indent num_indent) ^ "if(" ^ convert_expr e ^ ") " ^
+                  convert_stmt num_indent env currf s ^(indent num_indent) ^ "else " ^ else_block
+  | For(i, c, u, s) -> (indent num_indent) ^ "for(" ^ convert_expr i ^ "; " ^ convert_expr c ^ "; " ^
+  convert_expr u ^ ") {" ^ convert_stmt (num_indent + 1) env currf s ^ "}\n"
+  | While(e, s) -> (indent num_indent) ^ "while(" ^ convert_expr e ^ ")" ^ convert_stmt (num_indent + 1) env currf s
   | Lock(s) -> myenv.(0) <- myenv.(0)+1; let lock = string_of_int myenv.(0) in
- 		"pthread_mutex_lock(&m" ^ lock ^ ");\n" ^ convert_stmt env currf s ^ "pthread_mutex_unlock(&m" ^ lock ^ ");\n"
-  | Barrier(e) -> "int thread_counter;\nfor(thread_counter=0;thread_counter<" ^
-		  string_of_int myenv.(1) ^ ";thread_counter++){\n" ^ "pthread_join(threads[thread_counter],NULL);\n" ^ "}\n"
+               (indent num_indent) ^ "pthread_mutex_lock(&m" ^ lock ^ ");\n" ^ convert_stmt num_indent env currf s ^ 
+               "pthread_mutex_unlock(&m" ^ lock ^ ");\n"
+  | Barrier(e) ->(indent num_indent) ^ "int thread_counter;\n"^(indent num_indent) ^ "for(thread_counter=0;thread_counter<" ^
+		  string_of_int myenv.(1) ^ ";thread_counter++){\n" ^(indent num_indent) ^ 
+                  "pthread_join(threads[thread_counter],NULL);\n" ^(indent num_indent) ^ "}\n"
   | Spawn(Call(id,args)) -> myenv.(1) <- myenv.(1)+1;
 			(thread_funcs.(0) <- (build_thread_func (id,args,string_of_int (myenv.(1)-1),env))::thread_funcs.(0));
 			let thread = string_of_int (myenv.(1)-1) in 
@@ -225,18 +232,18 @@ let rec convert_stmt env currf = function
 						   ^ ");\n" 
   | Pfor(t, i, b, s) -> let build_pfor_func (stmt,n,env) =
         			"void *thread_" ^ n ^ "(void *args){\n" ^
-        			"\tint i;\n" ^
-        			"\tint *p = (int *)args;\n" ^
-        			"\tint lower = p[0];\n" ^
-        			"\tint upper = p[1];\n" ^
-        			"\tfor(i=lower; i<upper; i++)\n" ^
-        			"\t" ^ (*
+        			(indent 1) ^"int i;\n" ^
+        			(indent 1) ^"int *p = (int *)args;\n" ^
+        			(indent 1) ^"int lower = p[0];\n" ^
+        			(indent 1) ^"int upper = p[1];\n" ^
+        			(indent 1) ^"for(i=lower; i<upper; i++)\n" ^
+        			(*
 				(if is_assignment stmt then
 				    get_assigned_var stmt
 				 else
 				    "") ^*)
-				convert_stmt env currf stmt ^
-        			"\tpthread_exit(NULL);\n" ^
+				convert_stmt 1 env currf stmt ^
+        			(indent 1) ^"pthread_exit(NULL);\n" ^
         			"}\n\n"	in
 			myenv.(1) <- myenv.(1)+1;
 			(thread_funcs.(0) <- (build_pfor_func (s,string_of_int (myenv.(1)-1),env))::thread_funcs.(0));
@@ -264,7 +271,7 @@ let string_of_fdecl (env,fdecl) =
   	string_of_data_type fdecl.fname ^ "(" ^ 
     	String.concat "," (List.map string_of_data_type fdecl.formals) ^ 
     	"){\n" ^
-  	String.concat "" (List.map (convert_stmt env (id_of_data_type fdecl.fname)) fdecl.body) ^
+  	String.concat "" (List.map (convert_stmt 1 env (id_of_data_type fdecl.fname)) fdecl.body) ^
   	"}\n"
     ) else ("")
 
