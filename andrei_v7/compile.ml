@@ -11,7 +11,7 @@ let includes =
     "#include <stdbool.h>\n" ^
     "#include <stdlib.h>\n" ^
     "#include <string.h>\n" ^
-    "#include <pthread.h>\n"
+    "#include <pthread.h>\n\n"
 
 let rec string_of_data_type = function
     IntType(s) -> "int " ^ s
@@ -367,7 +367,14 @@ let generate_code (vars, funcs) env =
     let env_vars = append_env env vars in
     let env_funcs = append_env env funcs in
     "/* Code Generated from SMPL */\n" ^ includes ^
-    String.concat "\n" (List.map convert_globals env_vars) ^ "\n" ^
+    String.concat "\n" (List.map convert_globals env_vars) ^ "\n\n" ^
+    String.concat "\n" (List.map (fun (tenv,fdecl) ->
+	let name = string_of_data_type fdecl.fname in
+	if name <> "int main" then
+           string_of_data_type fdecl.fname ^ "(" ^ String.concat "," (List.map string_of_data_type fdecl.formals) ^ ");"
+	else
+	   ""
+    ) env_funcs) ^
     (List.fold_left (fun acc x -> acc ^ x) "" (snd (locks (myenv.(0), [])))) ^ "\n" ^
     (List.fold_left (fun acc x -> acc ^ x) "" (snd (threads (myenv.(1), [])))) ^ "\n" ^
     (if myenv.(1) > 0 then "pthread_t threads[" ^ string_of_int myenv.(1) ^ "];\n\n" else "") ^
