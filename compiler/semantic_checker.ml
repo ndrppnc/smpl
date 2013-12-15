@@ -305,7 +305,7 @@ let validate_program (globalvars, funcs) =
         | While (exp, body) ->
                 let first_env = process_expr (id_of_data_type fname) env exp
                 in process_func_body fname first_env body
-        | Pfor(threads, init, cond, body) ->
+        | Pfor(threads, counter, init, cond, body) ->
                 let first_env = process_expr (id_of_data_type fname) env threads
                 in let second_env = process_expr (id_of_data_type fname) first_env init
                 in let third_env = process_expr (id_of_data_type fname)
@@ -571,7 +571,7 @@ let validate_program (globalvars, funcs) =
                 let _ = verify_expr (id_of_data_type fname) env is_in_loop exp
                 in let _ = verify_func_body fname env "" true body
                 in ""
-        | Pfor(threads, init, cond, body) ->
+        | Pfor(threads, counter, init, cond, body) ->
                 let data_type = 
                     verify_expr (id_of_data_type fname) env is_in_loop threads
                 in if(data_type <> "integer") then

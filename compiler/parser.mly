@@ -79,8 +79,8 @@ stmt:
   | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt
      { For($3, $5, $7, $9) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
-  | PFOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt
-     { Pfor($3, $5, $7, $9) }
+  | PFOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt
+     { Pfor($3, $5, $7, $9, $11) }
   | SPAWN call_opt SEMI { Spawn($2) }
   | LOCK stmt { Lock($2) }
   | BARRIER empty_opt SEMI { Barrier($2) }

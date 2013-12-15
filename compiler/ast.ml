@@ -40,7 +40,7 @@ type stmt =
   | If of expr * stmt * stmt
   | For of expr * expr * expr * stmt
   | While of expr * stmt
-  | Pfor of expr * expr * expr * stmt
+  | Pfor of expr * expr * expr * expr * stmt
   | Spawn of expr
   | Lock of stmt (* Not sure whether stmt or expr *)
   | Barrier of expr	

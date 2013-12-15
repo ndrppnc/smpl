@@ -66,7 +66,7 @@ let rec string_of_stmt = function
 						^ " WHILE " ^ string_of_expr e 
 						^ " PERFORMING " ^ string_of_expr se ^ ";\n"
   | While (e, b) -> " WHILE " ^ string_of_expr e ^ " DO " ^ string_of_stmt b ^ ";\n"
-  | Pfor(t, s, e, b) -> "PFOR: Threads: " ^ string_of_expr t ^ "; " ^ string_of_expr s   
+  | Pfor(t, c, s, e, b) -> "PFOR: Threads: " ^ string_of_expr t ^ "; " ^ string_of_expr s   
 	          ^ " AND DO " ^ string_of_stmt b
 						^ " WHILE " ^ string_of_expr e ^ ";\n"
   | Spawn(e) -> "Spawn: " ^ string_of_expr e ^ "\n"
