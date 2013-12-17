@@ -74,11 +74,31 @@ let is_assignment = function
 (* keep track of assignments
    in pfor. REMOVE THE REFERENCE VARIABLES *)
 let assignments_in_pfor = ref ""
+let defs_in_pfor = ref ""
 let globals_in_pfor_assignments = ref []
 let globals_init_values = ref []
 
 let generate_code (vars, funcs) env =
-    let take_variables_here_and_use_them = "" 
+    let rec append_env env = function
+    [] -> []
+    | hd::tl -> (env, hd)::append_env env tl
+    in let env_vars = append_env env vars in
+    let global_inits =
+	ignore (List.map (fun (env,globals) ->
+     	  let data_type = fst globals in
+    	  let var_id = id_of_data_type data_type in
+    	  let (global_type, ref_count) = try Semantic_checker.StringMap.find
+    	  var_id env.Semantic_checker.globals_map with Not_found -> (var_id, 0)  in
+    	  if(ref_count <> 0) then (
+            match data_type with
+            IntType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
+          | FloatType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
+          | BoolType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
+          | CharType(s) -> globals_init_values := (s,"'" ^ string_of_literal (snd globals) ^ "'")::!globals_init_values; ""
+          | StrType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
+          | VoidType(s) -> ("")
+          ) else ("")
+	) env_vars); ""
     in let rec convert_expr env is_pfor is_replace myA myB = function
     Id(x)  -> if is_replace && x = myA then
                    myB
@@ -167,9 +187,13 @@ let generate_code (vars, funcs) env =
 
     in let get_func_locals_list fname_id env = 
         Semantic_checker.VarMap.fold (fun (my_fun, var_id) (var_type, ref) var_list ->
-            if(my_fun = fname_id) then
-                (var_id,var_type) :: var_list
-            else
+            if(my_fun = fname_id) then (
+                let (var_type, ref_count) = try Semantic_checker.VarMap.find
+                (fname_id,var_id) env.Semantic_checker.locals_map with Not_found -> (var_id, 0) in
+                if(ref_count <> 0) then (
+                   (var_id,var_type) :: var_list
+                ) else var_list
+            ) else
                 var_list
         ) env.Semantic_checker.locals_map []
 
@@ -204,7 +228,7 @@ let generate_code (vars, funcs) env =
 	  "") ^
 	"}\n\n"	
 
-    in let build_pfor (f,n,i,l,c,num_indent,env) =
+    in let build_pfor (f,n,i,l,c,remove,num_indent,env) =
 	let num_threads = n in
 	let init = i in
 	let limit = l in
@@ -219,7 +243,10 @@ let generate_code (vars, funcs) env =
 	indent num_indent ^ "void *pfor_args_" ^ k ^ "[num_threads_" ^ k ^ "][3];\n" ^
 	indent num_indent ^ "void *pfor_local_vars_" ^ k ^ "[" ^ string_of_int (List.length locals_list) ^ "];\n" ^
 	(fst (List.fold_left (fun (acc, count) (var_id, var_type) ->
-	    (acc ^ indent num_indent ^ "pfor_local_vars_" ^ k ^ "[" ^ string_of_int count ^ "] = (void *)&" ^ var_id ^ ";\n", count+1)
+	    if not (List.mem var_id remove) then (
+	      (acc ^ indent num_indent ^ "pfor_local_vars_" ^ k ^ "[" ^ string_of_int count ^ "] = (void *)&" ^ var_id ^ ";\n", count+1)
+            ) else
+	      (acc, count)
 	) ("",0) locals_list)) ^
 	indent num_indent ^ "int pfor_i_" ^ k ^ ";\n\n" ^
 	indent num_indent ^ "for(pfor_i_" ^ k ^ "=0;pfor_i_" ^ k ^ "<num_threads_" ^ k ^ ";pfor_i_" ^ k ^ "++){\n" ^
@@ -241,6 +268,7 @@ let generate_code (vars, funcs) env =
    pfors -- in that order *)
     in let myenv = Array.make 3 0
     in let thread_funcs = Array.make 2 []
+    in let remove = Array.make 1 []
 
     in let rec convert_stmt num_indent env currf is_pfor is_replace myA myB = function
     Expr(e) -> indent num_indent ^ convert_expr env is_pfor is_replace myA myB e ^ ";\n"
@@ -249,6 +277,9 @@ let generate_code (vars, funcs) env =
         	  let (var_type, ref_count) = try Semantic_checker.VarMap.find
         	  (currf,var_id) env.Semantic_checker.locals_map with Not_found -> (var_id, 0) in
         	  if(ref_count <> 0) then (
+		     if is_pfor then (
+			remove.(0) <- var_id::remove.(0); ()
+		     ) else ();
 	   	     indent num_indent ^ string_of_data_type e ^ ";\n"
         	  ) else ("") 
   | DeclareAssign(a, b) -> let data_type = a in
@@ -256,7 +287,10 @@ let generate_code (vars, funcs) env =
                   	   let (var_type, ref_count) = try Semantic_checker.VarMap.find
                   	   (currf,var_id) env.Semantic_checker.locals_map with Not_found -> (var_id, 0) in
                   	   if(ref_count <> 0) then (
-                     		indent num_indent ^ string_of_data_type a ^ "=" ^ convert_expr env is_pfor is_replace myA myB b ^ ";\n"
+                     		if is_pfor then (
+                       		   remove.(0) <- var_id::remove.(0); ()
+                     		) else ();
+				indent num_indent ^ string_of_data_type a ^ "=" ^ convert_expr env is_pfor is_replace myA myB b ^ ";\n"
                   	   ) else ("")
   | Return(e) -> indent num_indent ^ "return " ^ convert_expr env is_pfor is_replace myA myB e ^ ";\n"
   | Break(e) -> indent num_indent ^ "break;\n"
@@ -298,8 +332,10 @@ let generate_code (vars, funcs) env =
  				(indent 1) ^ "int lower = *((int *)arguments[0]);\n" ^
 				(indent 1) ^ "int upper = *((int *)arguments[1]);" ^
         			(let locals = (List.fold_left (fun (acc, count) (var_id, var_type) ->
-            				(acc ^ indent num_indent ^ (convert_data_type var_type) ^
+            				if not (List.mem var_id remove.(0)) then (
+					(acc ^ indent num_indent ^ (convert_data_type var_type) ^
 					 " " ^ var_id ^ " = " ^ "*((" ^ convert_data_type var_type ^ " *)thread_0_local_vars[" ^ string_of_int count ^ "]);\n", count+1)
+					) else (acc, count)
         			) ("",0) (List.rev (get_func_locals_list currf env))) in
 				if snd locals > 0 then (
 					(indent 1) ^ "void **thread_0_local_vars = (void **)arguments[2];\n" ^
@@ -323,7 +359,7 @@ let generate_code (vars, funcs) env =
 			build_pfor (currf,(convert_expr env is_pfor is_replace myA myB t),
 					  (convert_expr env is_pfor is_replace myA myB i),
 					  (convert_expr env is_pfor is_replace myA myB b),
-				    myenv.(1)-1,num_indent,env)
+				    myenv.(1)-1,remove.(0),num_indent,env)
   | Spawn(_) -> "" (* trying to spawn anything but a function call will be ignored *)
 
   in let rec locks (n,l) =
@@ -345,12 +381,11 @@ let generate_code (vars, funcs) env =
     var_id env.Semantic_checker.globals_map with Not_found -> (var_id, 0)  in
     if(ref_count <> 0) then (
 	match data_type with
-          IntType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; "int " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
-        | FloatType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; "float " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
-        | BoolType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; "bool " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
-        | CharType(s) -> globals_init_values := (s,"'" ^ string_of_literal (snd globals) ^ "'")::!globals_init_values;
-			 "char " ^ s ^ " = " ^ "'" ^ string_of_literal (snd globals) ^ "';"
-        | StrType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; "char " ^ s ^ "[" ^
+          IntType(s) -> "int " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
+        | FloatType(s) -> "float " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
+        | BoolType(s) -> "bool " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
+        | CharType(s) -> "char " ^ s ^ " = " ^ "'" ^ string_of_literal (snd globals) ^ "';"
+        | StrType(s) -> "char " ^ s ^ "[" ^
                         string_of_int (String.length (string_of_literal(snd globals)) - 1)
                         ^ "]" ^ " = " ^ string_of_literal (snd globals) ^ ";"
         | VoidType(s) -> ""
@@ -376,13 +411,19 @@ let generate_code (vars, funcs) env =
     in let env_vars = append_env env vars in
     let env_funcs = append_env env funcs in
     "/* Code Generated from SMPL */\n" ^ includes ^
-    String.concat "\n" (List.map convert_globals env_vars) ^ "\n\n" ^
+    String.concat "\n" (List.map convert_globals env_vars) ^ global_inits ^ "\n\n" ^
     String.concat "\n" (List.map (fun (tenv,fdecl) ->
-	let name = string_of_data_type fdecl.fname in
-	if name <> "int main" then
-           string_of_data_type fdecl.fname ^ "(" ^ String.concat "," (List.map string_of_data_type fdecl.formals) ^ ");"
-	else
-	   ""
+        let name = string_of_data_type fdecl.fname in
+        if name <> "int main" then (
+           let data_type = fdecl.fname in
+           let var_id = id_of_data_type data_type in
+           let (func_type, ref_count) = try Semantic_checker.StringMap.find
+           var_id env.Semantic_checker.functions_map with Not_found -> (var_id, 0)  in
+           if(ref_count <> 0) then (
+                string_of_data_type fdecl.fname ^ "(" ^ String.concat "," (List.map string_of_data_type fdecl.formals) ^ ");"
+           ) else ("")
+        ) else
+           ""
     ) env_funcs) ^
     (List.fold_left (fun acc x -> acc ^ x) "" (snd (locks (myenv.(0), [])))) ^ "\n" ^
     (List.fold_left (fun acc x -> acc ^ x) "" (snd (threads (myenv.(1), [])))) ^ "\n" ^
