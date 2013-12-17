@@ -307,10 +307,10 @@ let validate_program (globalvars, funcs) =
                 in process_func_body fname first_env body
         | Pfor(threads, counter, init, cond, body) ->
                 let first_env = process_expr (id_of_data_type fname) env threads
-                in let second_env = process_expr (id_of_data_type fname) first_env init
-                in let third_env = process_expr (id_of_data_type fname)
-                second_env cond
-                in process_func_body fname third_env body
+                in let second_env = process_expr (id_of_data_type fname) first_env counter
+                in let third_env = process_expr (id_of_data_type fname) second_env init
+                in let fourth_env = process_expr (id_of_data_type fname) third_env cond
+                in process_func_body fname fourth_env body
         | Spawn(exp) -> process_expr (id_of_data_type fname) env exp
         | Lock(stmt) -> process_func_body fname env stmt
         | Barrier(exp) -> env
@@ -399,7 +399,7 @@ let validate_program (globalvars, funcs) =
                 in let type_right = verify_expr fname_id env is_in_loop idx
                 in let id_name = (match id with
                     Id(s) -> s
-                    | _ -> raise (Failure ("Unexpected error in function " ^
+                    | _ -> raise (Failure ("Unexpected error during Assign in function " ^
                             fname_id))
                 )
                 in if(type_id <> type_right) then (
@@ -572,7 +572,17 @@ let validate_program (globalvars, funcs) =
                 in let _ = verify_func_body fname env "" true body
                 in ""
         | Pfor(threads, counter, init, cond, body) ->
-                let data_type = 
+                let _ = match counter with
+                Id(s) -> 
+                    let counter_type = verify_expr (id_of_data_type fname) env
+                    is_in_loop counter in
+                    if(counter_type <> "integer") then
+                    raise (Failure ("Function: "^(id_of_data_type fname)^
+                    "counter in pfor should be an integer variable ONLY."^
+                    " Here it is "^ (counter_type)))
+                | _ -> raise(Failure ("Function: "^(id_of_data_type fname)^
+                        " counter in pfor should be an integer variable name ONLY"))
+                in let data_type = 
                     verify_expr (id_of_data_type fname) env is_in_loop threads
                 in if(data_type <> "integer") then
                     raise (Failure ("Function:"^(id_of_data_type fname)^

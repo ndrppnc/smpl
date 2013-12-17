@@ -72,12 +72,14 @@ let is_assignment = function
   | _ -> false
 
 (* keep track of assignments
-   in pfor *)
+   in pfor. REMOVE THE REFERENCE VARIABLES *)
 let assignments_in_pfor = ref ""
 let globals_in_pfor_assignments = ref []
 let globals_init_values = ref []
 
-let rec convert_expr env is_pfor is_replace myA myB = function
+let generate_code (vars, funcs) env =
+    let take_variables_here_and_use_them = "" 
+    in let rec convert_expr env is_pfor is_replace myA myB = function
     Id(x)  -> if is_replace && x = myA then
                    myB
               else
@@ -127,13 +129,13 @@ let rec convert_expr env is_pfor is_replace myA myB = function
         		(List.map (fun e -> convert_expr env is_pfor is_replace myA myB e ) al) ^ ")")
   | Noexpr -> ""
 
-let rec indent n =
+  in let rec indent n =
 	if n = 1 then
 	  "    "
 	else
 	  "    "^indent(n-1)
 
-let build_args (a,n,num_indent,env,is_pfor) =
+  in let build_args (a,n,num_indent,env,is_pfor) =
 	let list_size = List.length a in
 	let lit_counter = Array.make 1 0 in
 	if list_size > 0 then
@@ -155,7 +157,7 @@ let build_args (a,n,num_indent,env,is_pfor) =
 	else
 	  ""
 
-let get_func_formals_list fname_id env =
+    in let get_func_formals_list fname_id env =
         List.fold_left (fun arg_list (dt_func, arg) ->
             if(dt_func = fname_id) then
                 arg :: arg_list
@@ -163,7 +165,7 @@ let get_func_formals_list fname_id env =
                 arg_list
         ) [] env.Semantic_checker.formals_list
 
-let get_func_locals_list fname_id env = 
+    in let get_func_locals_list fname_id env = 
         Semantic_checker.VarMap.fold (fun (my_fun, var_id) (var_type, ref) var_list ->
             if(my_fun = fname_id) then
                 (var_id,var_type) :: var_list
@@ -171,7 +173,7 @@ let get_func_locals_list fname_id env =
                 var_list
         ) env.Semantic_checker.locals_map []
 
-let rec build_vars (f,n,counter,s,k,env) =
+    in let rec build_vars (f,n,counter,s,k,env) =
 	let test = Array.make 1 0 in
 	let data_type = Array.make 1 "" in
 	let var_type = List.iter (fun arg ->
@@ -187,7 +189,7 @@ let rec build_vars (f,n,counter,s,k,env) =
         else
           build_vars (f,n-1,counter,my_var ^ s,k+1,env)
 
-let build_thread_func (f,a,n,env) =
+    in let build_thread_func (f,a,n,env) =
 	let list_size = List.length a in
 	"void *thread_" ^ n ^ "(void *args){\n" ^
         (if list_size > 0 then
@@ -202,7 +204,7 @@ let build_thread_func (f,a,n,env) =
 	  "") ^
 	"}\n\n"	
 
-let build_pfor (f,n,i,l,c,num_indent,env) =
+    in let build_pfor (f,n,i,l,c,num_indent,env) =
 	let num_threads = n in
 	let init = i in
 	let limit = l in
@@ -237,10 +239,10 @@ let build_pfor (f,n,i,l,c,num_indent,env) =
 (* myenv stores counters for the
    number of locks, threads, and
    pfors -- in that order *)
-let myenv = Array.make 3 0
-let thread_funcs = Array.make 2 []
+    in let myenv = Array.make 3 0
+    in let thread_funcs = Array.make 2 []
 
-let rec convert_stmt num_indent env currf is_pfor is_replace myA myB = function
+    in let rec convert_stmt num_indent env currf is_pfor is_replace myA myB = function
     Expr(e) -> indent num_indent ^ convert_expr env is_pfor is_replace myA myB e ^ ";\n"
   | Declare(e) -> let data_type = e in
         	  let var_id = id_of_data_type data_type in
@@ -324,19 +326,19 @@ let rec convert_stmt num_indent env currf is_pfor is_replace myA myB = function
 				    myenv.(1)-1,num_indent,env)
   | Spawn(_) -> "" (* trying to spawn anything but a function call will be ignored *)
 
-let rec locks (n,l) =
+  in let rec locks (n,l) =
 	if n = 0 then
 	  (0, l)
 	else
 	  locks (n-1, ("pthread_mutex_t m" ^ string_of_int (n) ^ "=PTHREAD_MUTEX_INITIALIZER;\n") :: l)
 
-let rec threads (n,l) =
+  in let rec threads (n,l) =
         if n = 0 then
           (0, l)
         else
           threads (n-1, ("void *thread_" ^ string_of_int (n-1) ^ "(void *args);\n") :: l)
 
-let convert_globals (env, globals) = 
+  in let convert_globals (env, globals) = 
     let data_type = fst globals in
     let var_id = id_of_data_type data_type in
     let (global_type, ref_count) = try Semantic_checker.StringMap.find 
@@ -354,7 +356,7 @@ let convert_globals (env, globals) =
         | VoidType(s) -> ""
     ) else ("")
 
-let string_of_fdecl (env,fdecl) =
+  in let string_of_fdecl (env,fdecl) =
     let data_type = fdecl.fname in
     let var_id = id_of_data_type data_type in
     let (func_type, ref_count) = try Semantic_checker.StringMap.find
@@ -367,12 +369,11 @@ let string_of_fdecl (env,fdecl) =
         "}\n"
     ) else ("") 
 
-let rec append_env env = function
+  in let rec append_env env = function
     [] -> []
     | hd::tl -> (env, hd)::append_env env tl
 
-let generate_code (vars, funcs) env =
-    let env_vars = append_env env vars in
+    in let env_vars = append_env env vars in
     let env_funcs = append_env env funcs in
     "/* Code Generated from SMPL */\n" ^ includes ^
     String.concat "\n" (List.map convert_globals env_vars) ^ "\n\n" ^
