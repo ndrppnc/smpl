@@ -1,0 +1,8 @@
+main()
+{
+  int a;
+  int b;
+  a = 42;
+  b = 57;
+  printf("%d \n",a + b * 3);
+}

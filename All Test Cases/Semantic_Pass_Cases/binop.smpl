@@ -1,0 +1,33 @@
+int a=5;
+float f=3.0;
+boolean b=false;
+char c='k';
+string s="hello";
+
+main()
+{
+/* binop arithmetic*/
+printf(a+b);
+printf(a+f);
+printf(a+c);
+printf(a/b);
+printf(a/f);
+printf(a/c);
+printf(a-b);
+printf(a-f);
+printf(a-c);
+printf(a*b);
+printf(a-f);
+printf(a-c);
+
+/*binop logical*/
+
+boolean l=a>f;
+boolean l1=a<f;
+boolean l2=a>=f;
+boolean l3=a<b;
+boolean l4=a<=b;
+boolean l5=c!=b;
+
+}
+

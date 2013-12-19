@@ -1,0 +1,10 @@
+main()
+{
+    int i;
+
+    pfor (10;i;0;100) 
+    {
+        printf("%d",i);
+    }
+    printf("%d",42);
+}
