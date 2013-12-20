@@ -71,10 +71,8 @@ let is_assignment = function
     Assign(a, b) -> true
   | _ -> false
 
-(* keep track of assignments
-   in pfor. REMOVE THE REFERENCE VARIABLES *)
+(* keep track of assignments in pfor *)
 let assignments_in_pfor = ref ""
-let defs_in_pfor = ref ""
 let globals_in_pfor_assignments = ref []
 let globals_init_values = ref []
 
@@ -225,7 +223,7 @@ let generate_code (vars, funcs) env =
 	(if list_size > 0 then
 	  ("var0" ^ (fst (List.fold_left (fun (acc, k) x -> (acc ^ ",var" ^ (string_of_int k), k+1)) ("",1) (List.tl a))) ^ ");\n")
 	else
-	  "") ^
+            ");\n") ^
 	"}\n\n"	
 
     in let build_pfor (f,n,i,l,c,remove,num_indent,env) =
