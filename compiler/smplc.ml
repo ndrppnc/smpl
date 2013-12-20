@@ -1,7 +1,7 @@
 type action = DumpAst | CodeGen | SyntaxCheck | InvalidArg
 
 let help_msg = "NAME: \n\tsmpl - Compiler for generating C code for SiMPLe" ^
-        " Programming Language\nARGUMENTS:\n\t -a code-input Print the parse" ^
+        " Parallel Language\nARGUMENTS:\n\t -a code-input Print the parse" ^
         " results of the input SMPL code \n\t -c code-input Generate the C" ^
         " code equivalent to the input SMPL code\n\t -s code-input Just check" ^
         " the syntax of the SMPL code\n code-input can be one of the" ^

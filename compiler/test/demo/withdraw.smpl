@@ -1,0 +1,18 @@
+float balance = 2000.00;
+
+withdraw(float val){
+  lock {
+    if(balance-val >= 0)
+      balance = balance-val;
+  }
+}
+
+int main(){
+  int i;  
+  int n = 1000000;
+  for(i=1; i<100; i++){
+    float amount = i*10;
+    spawn withdraw(amount);
+  }
+  printf("The remaining balance is %f.\n",balance);
+}

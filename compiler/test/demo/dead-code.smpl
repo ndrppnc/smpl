@@ -3,8 +3,10 @@ char unused2 = 'c';
 float used1 = 2.0;
 void main()
 {
+    int test = 0;
     used1 = 4.0;
     printf("%f \n", used1);
+    func1_used();
 }
 
 func1_unused()
@@ -16,5 +18,12 @@ func1_unused()
 func2_unused(char var)
 {
     printf("%c", var);
+    /* Indirect recursion */
     func1_unused();
+}
+
+func1_used()
+{
+    int unused_local = 100;
+    printf("This function had an unused variable\n");
 }

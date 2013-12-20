@@ -10,6 +10,7 @@ void main()
 func1_unused()
 {
     unused2 = 'd';
+    /* direct recursion */
     func1_unused();
 }
 

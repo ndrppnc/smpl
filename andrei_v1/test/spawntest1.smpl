@@ -1,9 +1,0 @@
-void main()
-{ 
-    int i;
-    for(i=0;i<100;i=i+1)
-    { 
-        print("%d, %s\n", i=2, print("argument"));
-        spawn(print(i+100));
-    }
-} 

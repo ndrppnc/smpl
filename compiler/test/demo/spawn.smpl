@@ -1,0 +1,11 @@
+say(string str){
+  printf("%s\n",str);
+}
+
+int main(){
+  spawn say("Hello");
+  spawn say("world");
+  spawn say("user!");
+  barrier;
+  printf("Done!\n");
+}
