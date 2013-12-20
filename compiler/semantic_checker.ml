@@ -638,8 +638,14 @@ let validate_program (globalvars, funcs) =
             raise (Failure ("Function:"^func_name^": '"^func_name^
                     "' is a reserved keyword. It cannot be used as a"^
                     " function name"))
-        else
-            verify_function second_env str_dt func
+        else (
+            let (var_type, ref_count) = try StringMap.find func_name second_env.functions_map
+            with Not_found -> ("", 0) in
+            if(ref_count <> 0) then
+                verify_function second_env str_dt func
+            else
+                ""
+        )
         ) "" funcs
     in if (print_map) then (
         let _ = print_global_map second_env in
