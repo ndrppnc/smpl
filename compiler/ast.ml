@@ -27,7 +27,6 @@ type expr =
   | Call of string * expr list
   | Paren of expr
   | Noexpr
-(* Add Array *)
 
 type stmt =
     Block of stmt list
@@ -42,7 +41,7 @@ type stmt =
   | While of expr * stmt
   | Pfor of expr * expr * expr * expr * stmt
   | Spawn of expr
-  | Lock of stmt (* Not sure whether stmt or expr *)
+  | Lock of stmt
   | Barrier of expr	
 
 type func_decl = {

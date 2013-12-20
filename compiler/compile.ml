@@ -92,7 +92,7 @@ let generate_code (vars, funcs) env =
             IntType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
           | FloatType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
           | BoolType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
-          | CharType(s) -> globals_init_values := (s,"'" ^ string_of_literal (snd globals) ^ "'")::!globals_init_values; ""
+          | CharType(s) -> globals_init_values := (s, string_of_literal (snd globals))::!globals_init_values; ""
           | StrType(s) -> globals_init_values := (s,string_of_literal (snd globals))::!globals_init_values; ""
           | VoidType(s) -> ("")
           ) else ("")
@@ -382,7 +382,7 @@ let generate_code (vars, funcs) env =
           IntType(s) -> "int " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
         | FloatType(s) -> "float " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
         | BoolType(s) -> "bool " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
-        | CharType(s) -> "char " ^ s ^ " = " ^ "'" ^ string_of_literal (snd globals) ^ "';"
+        | CharType(s) -> "char " ^ s ^ " = " ^ string_of_literal (snd globals) ^ ";"
         | StrType(s) -> "char " ^ s ^ "[" ^
                         string_of_int (String.length (string_of_literal(snd globals)) - 1)
                         ^ "]" ^ " = " ^ string_of_literal (snd globals) ^ ";"
