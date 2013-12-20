@@ -1,0 +1,10 @@
+int a=10;
+char ch='a';
+int b=5;
+
+fun()
+{ int c=b+c;
+}
+main()
+{ fun();
+}

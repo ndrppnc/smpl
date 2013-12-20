@@ -1,0 +1,20 @@
+int unused1 = 0;
+char unused2 = 'c';
+float used1 = 2.0;
+void main()
+{
+    used1 = 4.0;
+    printf("%f \n", used1);
+}
+
+func1_unused()
+{
+    unused2 = 'd';
+    func1_unused();
+}
+
+func2_unused(char var)
+{
+    unused1 = 5;
+    printf("%c", var);
+}

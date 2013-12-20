@@ -1,0 +1,34 @@
+int a=5;
+boolean b=false;
+char c='c';
+float f=7.0;
+
+main()
+{
+
+a=b;
+a=c;
+a=f;
+
+b=a;
+b=c;
+b=f;
+
+c=a;
+c=b;
+c=f;
+
+f=a;
+f=b;
+f=c;
+
+
+
+
+
+
+
+
+
+
+}

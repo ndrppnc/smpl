@@ -1,0 +1,11 @@
+int i=10;
+
+main()
+{
+
+while(i!=0)
+{ printf("%d",i);
+  i-1;
+}
+
+} 

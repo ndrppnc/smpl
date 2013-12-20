@@ -1,0 +1,46 @@
+int a = 10;
+int b = 5;
+boolean b1=true;
+boolean b2=false;
+
+void main()
+{
+
+if(a>b)
+{ printf("a is greater than b");
+}
+
+if(a<b)
+{ printf("a is less than b");
+}
+
+if(a<=b)
+{ printf("a is less than or equal to b");
+}
+
+if(a==b)
+{ printf("a is equal to b");
+}
+
+if(a!=b)
+{ printf("a is not equal to b");
+}
+
+if((a!=b))
+{ printf("a is equal to b");
+}
+
+if(a>=b)
+{ printf("a is greater than or equal to b");
+}
+
+if(b1 && b2)
+{ printf("both are true");
+}
+
+if(b1 || b2)
+{ printf(" one or both are true");
+}
+
+}
+

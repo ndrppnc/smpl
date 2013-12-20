@@ -7,5 +7,5 @@ string stest = "I am working fine now\n";
 int main(int a, int b)
 {
     /* test program */
-    print("Hello World.. I have arrived\n");
+    printf("%s", stest);
 }

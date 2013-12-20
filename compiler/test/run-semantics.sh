@@ -1,8 +1,8 @@
 #!/bin/sh
 
-SMPL="./smplc -c "
+SMPL="../smplc -s "
 
-files="test/*.smpl"
+files="tests/semantic_pass_cases/*.smpl"
 
 CleanUp() {
 	rm test.out test.null

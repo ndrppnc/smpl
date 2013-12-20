@@ -1,0 +1,14 @@
+int sum=0;
+int add_to_sum(int val){
+   lock sum = sum+val;
+}
+
+int main(){
+   int i;
+   pfor(4;i;0;10000){
+      add_to_sum(i);
+   }
+   printf("The sum is %d.\n",sum);
+}
+
+

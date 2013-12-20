@@ -1,0 +1,72 @@
+int itest = 13;
+float ftest = 1.0;
+char ctest = 'c';
+boolean btest = true;
+
+funca(int a, int a2)
+{
+    int int_funca;
+    printf(a, a2);
+    /*funcb("abc");*/
+}
+
+int main(int a, float b)
+{
+    /* test program */
+    {
+    int i = 3;
+    int j;
+    int k;
+    funca(itest, ftest);
+    int n = ((j+k)*funcb());
+    n = (9+5)*(k+i);
+    funca(btest, itest);
+    string stest;
+    int main_int;
+    break;
+    if(i<10 || i>5)
+    {
+        i = 9;
+        return ((5+3)*funcd());
+    } else {
+        return funca(1,3);
+    }
+    for(i=10;i<20;i=i+1)
+    {
+        printf(itest, ftest, ctest, btest, a, b);
+        printf("%s %d\n", stest, 9);
+        break;
+    }
+    while(j < 100) {
+        funce();
+    }
+    lock {
+    funca(i,j);
+    funca(j,k);
+    funca((((j+k)*i) < n),(3));
+    spawn funca(5,3);
+    }
+    barrier;
+    printf("This is a string\" \t\n");
+    }
+}
+
+int funcd(){
+return 5;
+}
+
+int funce(){
+return 6;
+}
+
+funcb (string abc)
+{
+printf("got it");
+funcc();
+funcc();
+/*funca();*/
+}
+funcc()
+{
+return;
+}

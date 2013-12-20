@@ -1,0 +1,26 @@
+int a=1;
+int b=0;
+char c='a';
+int k=0;
+
+fun()
+{ if(a-b)
+{c=4;}
+else
+{k=c;
+ a=a/0;
+}
+}
+
+int fail=10; 
+
+main()
+{ if(a-b)
+{c=4;
+fun();}
+
+else
+{k=c;}
+
+fun();
+}

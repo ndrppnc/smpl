@@ -1,0 +1,15 @@
+main()
+{
+    int i;
+    int j=0;
+
+    pfor (5;i;10;100) 
+    {
+        printf("%d\n",i);
+        lock
+        {
+            j=j+1;
+        }
+    }
+    printf("%d\n",42);
+}
